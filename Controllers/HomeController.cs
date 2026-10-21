@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using mvcSecurity.Models;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 
 namespace mvcSecurity.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()
