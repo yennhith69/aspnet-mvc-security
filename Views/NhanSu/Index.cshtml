@@ -1,0 +1,107 @@
+﻿@model NhanSuIndexViewModel
+@{
+    ViewData["Title"] = "Hồ sơ nhân sự";
+    string NextDir(string col) => Model.Sort == col && Model.Dir == "asc" ? "desc" : "asc";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Hồ sơ nhân sự</h1>
+    @if (Model.CoQuyenSua)
+    {
+        <a class="btn btn-primary" asp-action="Create">Tiếp nhận hồ sơ</a>
+    }
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<form method="get" asp-action="Index" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="Tên hoặc mã nhân sự" maxlength="100" />
+    </div>
+    <div class="col-md-3">
+        <select name="donViId" class="form-select form-select-sm">
+            <option value="">Tất cả đơn vị</option>
+            @foreach (var d in Model.DonVis)
+            {
+                <option value="@d.Id" selected="@(Model.DonViId == d.Id)">@d.Ten</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="tinhTrang" class="form-select form-select-sm">
+            <option value="">Mọi tình trạng</option>
+            @foreach (var t in NhanSuText.TinhTrangs)
+            {
+                <option value="@t" selected="@(Model.TinhTrang == t)">@NhanSuText.TinhTrang(t)</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="trangThai" class="form-select form-select-sm">
+            <option value="">Mọi trạng thái hồ sơ</option>
+            @foreach (var t in NhanSuText.TrangThais)
+            {
+                <option value="@t" selected="@(Model.TrangThai == t)">@NhanSuText.TrangThai(t)</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">Tìm</button>
+        <a asp-action="Index" class="btn btn-sm btn-link">Xóa lọc</a>
+    </div>
+</form>
+
+<p class="text-muted small">Tìm thấy @Model.Total hồ sơ.</p>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th><a asp-action="Index" asp-route-sort="ma" asp-route-dir="@NextDir("ma")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Mã nhân sự</a></th>
+                <th><a asp-action="Index" asp-route-sort="ten" asp-route-dir="@NextDir("ten")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Họ tên</a></th>
+                <th><a asp-action="Index" asp-route-sort="donvi" asp-route-dir="@NextDir("donvi")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Đơn vị</a></th>
+                <th>Tình trạng</th>
+                <th>Trạng thái hồ sơ</th>
+                <th>Công khai</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var n in Model.Items)
+            {
+                <tr>
+                    <td>@n.MaHrm</td>
+                    <td>@n.HoTen</td>
+                    <td>@n.DonVi</td>
+                    <td>@NhanSuText.TinhTrang(n.TinhTrangCongTac)</td>
+                    <td>@NhanSuText.TrangThai(n.TrangThaiHoSo)</td>
+                    <td>@(n.CongKhai ? "Có" : "Không")</td>
+                    <td><a asp-action="Details" asp-route-id="@n.Id" class="btn btn-sm btn-outline-primary">Xem</a></td>
+                </tr>
+            }
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted">Không có hồ sơ nào.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<nav>
+    <ul class="pagination pagination-sm">
+        <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Trước</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link">@(Model.PageNumber) / @(Model.TotalPages)</span></li>
+        <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Sau</a>
+        </li>
+    </ul>
+</nav>

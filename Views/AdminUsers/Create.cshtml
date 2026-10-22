@@ -1,0 +1,74 @@
+﻿@model CreateUserViewModel
+@{
+    ViewData["Title"] = "Tạo tài khoản";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="h3 mb-3">Tạo tài khoản</h1>
+
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label">Họ tên</label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Role" class="form-label">Vai trò</label>
+                <select asp-for="Role" class="form-select">
+                    <option value="">-- Chọn vai trò --</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="HR">HR</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Lecturer">Lecturer</option>
+                </select>
+                <span asp-validation-for="Role" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DonViId" class="form-label">Đơn vị phụ trách (chỉ cho Manager)</label>
+                <select asp-for="DonViId" class="form-select">
+                    <option value="">-- Không chọn --</option>
+                    @foreach (var d in (IEnumerable<DonVi>)ViewBag.DonVis)
+                    {
+                        <option value="@d.Id">@d.Ten</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NhanSuId" class="form-label">Hồ sơ liên kết (chỉ cho Lecturer)</label>
+                <select asp-for="NhanSuId" class="form-select">
+                    <option value="">-- Không chọn --</option>
+                    @foreach (var n in ViewBag.NhanSus)
+                    {
+                        <option value="@n.Id">@n.MaHrm - @n.HoTen</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">Mật khẩu tạm thời</label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <div class="form-text">Tối thiểu 10 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+            <a class="btn btn-link" asp-action="Index">Quay lại</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

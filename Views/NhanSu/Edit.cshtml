@@ -1,0 +1,105 @@
+﻿@model NhanSuEditViewModel
+@{
+    ViewData["Title"] = "Sửa hồ sơ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <h1 class="h3 mb-3">Sửa hồ sơ</h1>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="HoTen" class="form-label">Họ tên</label>
+                <input asp-for="HoTen" class="form-control" />
+                <span asp-validation-for="HoTen" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="NgaySinh" class="form-label">Ngày sinh</label>
+                    <input asp-for="NgaySinh" class="form-control" type="date" />
+                    <span asp-validation-for="NgaySinh" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="GioiTinh" class="form-label">Giới tính</label>
+                    <select asp-for="GioiTinh" class="form-select">
+                        @foreach (var g in NhanSuText.GioiTinhs)
+                        {
+                            <option value="@g">@g</option>
+                        }
+                    </select>
+                    <span asp-validation-for="GioiTinh" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DienThoai" class="form-label">Điện thoại</label>
+                    <input asp-for="DienThoai" class="form-control" />
+                    <span asp-validation-for="DienThoai" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DiaChiCuTru" class="form-label">Địa chỉ cư trú</label>
+                <input asp-for="DiaChiCuTru" class="form-control" />
+                <span asp-validation-for="DiaChiCuTru" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DonViId" class="form-label">Đơn vị</label>
+                    <select asp-for="DonViId" class="form-select">
+                        @foreach (var d in (List<DonVi>)ViewBag.DonVis)
+                        {
+                            <option value="@d.Id">@d.Ten</option>
+                        }
+                    </select>
+                    <span asp-validation-for="DonViId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ChucVuId" class="form-label">Chức vụ</label>
+                    <select asp-for="ChucVuId" class="form-select">
+                        <option value="">-- Không chọn --</option>
+                        @foreach (var c in (List<ChucVu>)ViewBag.ChucVus)
+                        {
+                            <option value="@c.Id">@c.Ten</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TinhTrangCongTac" class="form-label">Tình trạng công tác</label>
+                <select asp-for="TinhTrangCongTac" class="form-select">
+                    @foreach (var t in NhanSuText.TinhTrangs)
+                    {
+                        <option value="@t">@NhanSuText.TinhTrang(t)</option>
+                    }
+                </select>
+                <span asp-validation-for="TinhTrangCongTac" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="CongKhai" class="form-check-input" />
+                <label asp-for="CongKhai" class="form-check-label">Cho phép công khai thông tin trên website (chỉ khi hồ sơ đã xác nhận)</label>
+                <span asp-validation-for="CongKhai" class="text-danger d-block"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a class="btn btn-link" asp-action="Details" asp-route-id="@Model.Id">Hủy</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

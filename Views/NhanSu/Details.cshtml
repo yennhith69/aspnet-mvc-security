@@ -1,0 +1,66 @@
+﻿@model NhanSuDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết hồ sơ";
+    var n = Model.NhanSu;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">@n.HoTen</h1>
+    <div>
+        @if (Model.CoQuyenSua)
+        {
+            <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@n.Id">Sửa</a>
+        }
+        @if (Model.CoQuyenXacNhan && n.TrangThaiHoSo == "DaCapMa")
+        {
+            <form asp-action="Confirm" asp-route-id="@n.Id" method="post" class="d-inline">
+                <button type="submit" class="btn btn-success">Xác nhận hồ sơ</button>
+            </form>
+        }
+        <a class="btn btn-link" asp-action="Index">Quay lại</a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<dl class="row">
+    <dt class="col-sm-3">Mã nhân sự</dt>
+    <dd class="col-sm-9">@n.MaHrm</dd>
+    <dt class="col-sm-3">Ngày sinh</dt>
+    <dd class="col-sm-9">@n.NgaySinh.ToString("dd/MM/yyyy")</dd>
+    <dt class="col-sm-3">Giới tính</dt>
+    <dd class="col-sm-9">@n.GioiTinh</dd>
+    <dt class="col-sm-3">Đơn vị</dt>
+    <dd class="col-sm-9">@Model.DonViTen</dd>
+    <dt class="col-sm-3">Chức vụ</dt>
+    <dd class="col-sm-9">@Model.ChucVuTen</dd>
+    <dt class="col-sm-3">Tình trạng công tác</dt>
+    <dd class="col-sm-9">@NhanSuText.TinhTrang(n.TinhTrangCongTac)</dd>
+    <dt class="col-sm-3">Trạng thái hồ sơ</dt>
+    <dd class="col-sm-9">@NhanSuText.TrangThai(n.TrangThaiHoSo)</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@n.Email</dd>
+    <dt class="col-sm-3">Điện thoại</dt>
+    <dd class="col-sm-9">@n.DienThoai</dd>
+    <dt class="col-sm-3">Địa chỉ cư trú</dt>
+    <dd class="col-sm-9">@n.DiaChiCuTru</dd>
+    <dt class="col-sm-3">Công khai</dt>
+    <dd class="col-sm-9">@(n.CongKhai ? "Có" : "Không")</dd>
+    <dt class="col-sm-3">Giấy tờ định danh</dt>
+    <dd class="col-sm-9">
+        @foreach (var g in Model.GiayTos)
+        {
+            <div>@g.Loai: @g.So</div>
+        }
+    </dd>
+</dl>
+<p>
+    <a class="btn btn-outline-secondary" asp-controller="TrinhDo" asp-action="Index" asp-route-nhanSuId="@n.Id">Trình độ và minh chứng</a>
+</p>

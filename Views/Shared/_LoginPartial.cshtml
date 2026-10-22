@@ -1,0 +1,34 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="NhanSu" asp-action="Index">Hồ sơ nhân sự</a>
+        </li>
+        @if (User.IsInRole("Administrator"))
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="AdminUsers" asp-action="Index">Tài khoản</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="AdminUsers" asp-action="LoginLogs">Nhật ký đăng nhập</a>
+            </li>
+        }
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="ChangePassword">@User.Identity!.Name</a>
+        </li>
+        <li class="nav-item">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
+            </form>
+        </li> 
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+        </li>
+    }
+</ul>

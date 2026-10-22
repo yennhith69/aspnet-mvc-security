@@ -1,0 +1,59 @@
+﻿@model TrinhDoCreateViewModel
+@{
+    ViewData["Title"] = "Thêm trình độ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="h3 mb-3">Thêm trình độ</h1>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="NhanSuId" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Loai" class="form-label">Loại trình độ</label>
+                <select asp-for="Loai" class="form-select">
+                    <option value="">-- Chọn --</option>
+                    @foreach (var l in TrinhDoText.Loais)
+                    {
+                        <option value="@l">@TrinhDoText.Loai(l)</option>
+                    }
+                </select>
+                <span asp-validation-for="Loai" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ChuyenNganh" class="form-label">Chuyên ngành</label>
+                <input asp-for="ChuyenNganh" class="form-control" />
+                <span asp-validation-for="ChuyenNganh" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DonViCap" class="form-label">Đơn vị cấp</label>
+                <input asp-for="DonViCap" class="form-control" />
+                <span asp-validation-for="DonViCap" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Tep" class="form-label">Tệp minh chứng (không bắt buộc)</label>
+                <input asp-for="Tep" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+                <div class="form-text">PDF, JPG hoặc PNG, tối đa 5 MB.</div>
+                <span asp-validation-for="Tep" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MoTa" class="form-label">Ghi chú về tệp</label>
+                <input asp-for="MoTa" class="form-control" />
+                <span asp-validation-for="MoTa" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu</button>
+            <a class="btn btn-link" asp-action="Index" asp-route-nhanSuId="@Model.NhanSuId">Hủy</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

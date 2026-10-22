@@ -21,7 +21,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -34,9 +35,17 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// Mặc định mọi trang phải đăng nhập; trang công khai gắn [AllowAnonymous]
-builder.Services.AddAuthorizationBuilder()
+// Kiểm tra security stamp ở mọi request: khóa tài khoản hoặc đổi mật khẩu thì phiên cũ hết hiệu lực ngay (mục 8, 9)
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+    options.ValidationInterval = TimeSpan.Zero);
+
+// Mặc định mọi trang phải đăng nhập; mỗi quyền trong DB là một policy cùng tên (mục 16)
+var authBuilder = builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+foreach (var code in Permissions.All)
+    authBuilder.AddPolicy(code, policy => policy.AddRequirements(new PermissionRequirement(code)));
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddScoped<HoSoScopeService>();
 
 // Mọi request POST đều kiểm tra antiforgery token (mục 12)
 builder.Services.AddControllersWithViews(options =>

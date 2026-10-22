@@ -1,0 +1,50 @@
+﻿@model List<LoginLog>
+@{
+    ViewData["Title"] = "Nhật ký đăng nhập";
+    int currentPage = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    string? ketQua = ViewBag.KetQua;
+}
+
+<h1 class="h3 mb-3">Nhật ký đăng nhập</h1>
+
+<form method="get" asp-action="LoginLogs" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="ketQua" class="form-select form-select-sm">
+            <option value="" selected="@(ketQua == null)">Tất cả</option>
+            <option value="Success" selected="@(ketQua == "Success")">Thành công</option>
+            <option value="Failed" selected="@(ketQua == "Failed")">Thất bại</option>
+            <option value="LockedOut" selected="@(ketQua == "LockedOut")">Bị khóa</option>
+        </select>
+    </div>
+    <div class="col-auto"><button type="submit" class="btn btn-sm btn-primary">Lọc</button></div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead><tr><th>Thời gian</th><th>Tên đăng nhập</th><th>Kết quả</th><th>IP</th></tr></thead>
+        <tbody>
+            @foreach (var l in Model)
+            {
+                <tr>
+                    <td>@l.ThoiGian.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <td>@l.UserName</td>
+                    <td>@l.KetQua</td>
+                    <td>@l.Ip</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<nav>
+    <ul class="pagination pagination-sm">
+        <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="LoginLogs" asp-route-page="@(currentPage - 1)" asp-route-ketQua="@ketQua">Trước</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link">@(currentPage) / @(totalPages)</span></li>
+        <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="LoginLogs" asp-route-page="@(currentPage + 1)" asp-route-ketQua="@ketQua">Sau</a>
+        </li>
+    </ul>
+</nav>
