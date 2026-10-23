@@ -1,0 +1,38 @@
+﻿@model HopDongSapHetHanViewModel
+@{
+    ViewData["Title"] = "Hợp đồng sắp hết hạn";
+}
+
+<h1 class="h3 mb-3">Hợp đồng sắp hết hạn</h1>
+
+<div class="mb-3">
+    <span class="me-2">Trong vòng:</span>
+    @foreach (var d in new[] { 30, 60, 90 })
+    {
+        <a class="btn btn-sm @(Model.Days == d ? "btn-primary" : "btn-outline-primary")" asp-action="SapHetHan" asp-route-days="@d">@d ngày</a>
+    }
+</div>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>Mã nhân sự</th><th>Họ tên</th><th>Loại hợp đồng</th><th>Hết hạn</th><th>Còn lại</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var r in Model.Items)
+            {
+                var conLai = (r.DenNgay.Date - DateTime.Today).Days;
+                <tr>
+                    <td>@r.MaHrm</td>
+                    <td>@r.HoTen</td>
+                    <td>@HopDongText.Loai(r.Loai)</td>
+                    <td>@r.DenNgay.ToString("dd/MM/yyyy")</td>
+                    <td>@conLai ngày</td>
+                    <td><a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-nhanSuId="@r.NhanSuId">Xem</a></td>
+                </tr>
+            }
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted">Không có hợp đồng nào sắp hết hạn.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

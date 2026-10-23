@@ -1,0 +1,57 @@
+﻿@model HopDongIndexViewModel
+@{
+    ViewData["Title"] = "Hợp đồng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-0">Hợp đồng</h1>
+        <div class="text-muted">@Model.MaHrm - @Model.HoTen</div>
+    </div>
+    <div>
+        @if (Model.CoQuyenSua)
+        {
+            <a class="btn btn-primary" asp-action="Create" asp-route-nhanSuId="@Model.NhanSuId">Thêm hợp đồng</a>
+        }
+        <a class="btn btn-link" asp-controller="NhanSu" asp-action="Details" asp-route-id="@Model.NhanSuId">Quay lại hồ sơ</a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>Loại</th><th>Từ ngày</th><th>Đến ngày</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var h in Model.Items)
+            {
+                var tt = HopDongText.TrangThai(h);
+                <tr>
+                    <td>@HopDongText.Loai(h.Loai)</td>
+                    <td>@h.TuNgay.ToString("dd/MM/yyyy")</td>
+                    <td>@(h.DenNgay.HasValue ? h.DenNgay.Value.ToString("dd/MM/yyyy") : "Không thời hạn")</td>
+                    <td>@tt</td>
+                    <td>
+                        @if (Model.CoQuyenSua && h.TrangThai == "HieuLuc")
+                        {
+                            <form asp-action="Terminate" asp-route-id="@h.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Chấm dứt</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted">Chưa có hợp đồng nào.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

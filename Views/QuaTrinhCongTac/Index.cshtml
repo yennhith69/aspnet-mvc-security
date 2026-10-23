@@ -1,0 +1,56 @@
+﻿@model CongTacIndexViewModel
+@{
+    ViewData["Title"] = "Quá trình công tác";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-0">Quá trình công tác</h1>
+        <div class="text-muted">@Model.MaHrm - @Model.HoTen</div>
+    </div>
+    <div>
+        @if (Model.CoQuyenSua)
+        {
+            <a class="btn btn-primary" asp-action="Create" asp-route-nhanSuId="@Model.NhanSuId">Thêm giai đoạn</a>
+        }
+        <a class="btn btn-link" asp-controller="NhanSu" asp-action="Details" asp-route-id="@Model.NhanSuId">Quay lại hồ sơ</a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead><tr><th>Đơn vị</th><th>Chức vụ</th><th>Từ ngày</th><th>Đến ngày</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var c in Model.Items)
+            {
+                <tr>
+                    <td>@c.DonVi</td>
+                    <td>@c.ChucVu</td>
+                    <td>@c.TuNgay.ToString("dd/MM/yyyy")</td>
+                    <td>@(c.DenNgay.HasValue ? c.DenNgay.Value.ToString("dd/MM/yyyy") : "Hiện tại")</td>
+                    <td>
+                        @if (Model.CoQuyenSua && !c.DenNgay.HasValue)
+                        {
+                            <form asp-action="Close" asp-route-id="@c.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Kết thúc</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted">Chưa có giai đoạn công tác nào.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
