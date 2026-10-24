@@ -12,7 +12,7 @@ public static class DbSeeder
     public static async Task SeedAsync(IServiceProvider sp, IConfiguration cfg)
     {
         var db = sp.GetRequiredService<ApplicationDbContext>();
-        await db.Database.MigrateAsync();
+        // Migration chạy riêng bằng tài khoản quản trị: dotnet ef database update --connection "..."
 
         // 1. Vai trò
         var roleMgr = sp.GetRequiredService<RoleManager<IdentityRole>>();
