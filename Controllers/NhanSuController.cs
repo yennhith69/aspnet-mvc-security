@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
+
 
 [Authorize(Policy = Permissions.HoSoXem)]
 public class NhanSuController : Controller
@@ -315,26 +318,33 @@ public class NhanSuController : Controller
 
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoXacNhan)]
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoXacNhan)]
     public async Task<IActionResult> Confirm(int id)
     {
-        var ns = await _db.NhanSus.FindAsync(id);
-        if (ns == null) return NotFound();
+        if (!await _db.NhanSus.AsNoTracking().AnyAsync(x => x.Id == id)) return NotFound();
 
-        if (ns.TrangThaiHoSo != "DaCapMa")
+        // Gọi stored procedure với tham số (không nối chuỗi): kiểm tra trạng thái, cập nhật, ghi nhật ký
+        var thanhCong = new SqlParameter("@ThanhCong", SqlDbType.Bit) { Direction = ParameterDirection.Output };
+        await _db.Database.ExecuteSqlRawAsync(
+            "EXEC dbo.sp_XacNhanHoSo @NhanSuId, @UserId, @UserName, @Ip, @ThanhCong OUTPUT",
+            new SqlParameter("@NhanSuId", id),
+            new SqlParameter("@UserId", (object?)_userManager.GetUserId(User) ?? DBNull.Value),
+            new SqlParameter("@UserName", User.Identity?.Name ?? ""),
+            new SqlParameter("@Ip", (object?)HttpContext.Connection.RemoteIpAddress?.ToString() ?? DBNull.Value),
+            thanhCong);
+
+        if (thanhCong.Value is true)
+        {
+            _logger.LogInformation("{User} xác nhận hồ sơ {Id}", User.Identity?.Name, id);
+            TempData["Success"] = "Đã xác nhận hồ sơ.";
+        }
+        else
         {
             TempData["Error"] = "Chỉ xác nhận được hồ sơ ở trạng thái 'Đã cấp mã'.";
-            return RedirectToAction(nameof(Details), new { id });
         }
-
-        ns.TrangThaiHoSo = "DaXacNhan";
-        await _db.SaveChangesAsync();
-        await WriteAuditAsync("XacNhanHoSo", ns.Id, $"Mã {ns.MaHrm}");
-        _logger.LogInformation("{User} xác nhận hồ sơ {Ma}", User.Identity?.Name, ns.MaHrm);
-
-        TempData["Success"] = "Đã xác nhận hồ sơ.";
         return RedirectToAction(nameof(Details), new { id });
     }
-
     // ---------- Hàm hỗ trợ ----------
 
     // Phạm vi xem hồ sơ theo vai trò (mục 3, 18): HR và Admin xem tất cả,
