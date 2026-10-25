@@ -111,7 +111,11 @@ public class NhanSuController : Controller
             .Select(x => new GiayToView { Loai = x.Loai, So = x.So })
             .ToListAsync();
         if (!coXemGiayTo)
-            foreach (var g in giayTos) g.So = Mask(g.So);      // che số giấy tờ với vai trò không có quyền
+        {
+            foreach (var g in giayTos) g.So = Mask(g.So);
+            ns.Email = MaskEmail(ns.Email);
+            ns.DienThoai = ns.DienThoai == null ? null : Mask(ns.DienThoai);
+        }    // che số giấy tờ với vai trò không có quyền
 
         string? chucVu = ns.ChucVuId.HasValue
             ? await _db.ChucVus.AsNoTracking().Where(x => x.Id == ns.ChucVuId).Select(x => x.Ten).FirstOrDefaultAsync()
@@ -386,6 +390,13 @@ public class NhanSuController : Controller
 
     private static string Mask(string s) =>
         s.Length <= 3 ? new string('*', s.Length) : new string('*', s.Length - 3) + s[^3..];
+
+    private static string? MaskEmail(string? e)
+    {
+        if (string.IsNullOrEmpty(e)) return e;
+        var at = e.IndexOf('@');
+        return at <= 1 ? "****" : e[0] + "****" + e[at..];
+    }
 
     private async Task WriteAuditAsync(string hanhDong, int doiTuongId, string? chiTiet)
     {
