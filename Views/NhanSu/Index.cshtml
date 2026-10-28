@@ -1,107 +1,116 @@
 ﻿@model NhanSuIndexViewModel
 @{
     ViewData["Title"] = "Hồ sơ nhân sự";
-    string NextDir(string col) => Model.Sort == col && Model.Dir == "asc" ? "desc" : "asc";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Hồ sơ nhân sự</h1>
+    <h2>Hồ sơ nhân sự</h2>
     @if (Model.CoQuyenSua)
     {
-        <a class="btn btn-primary" asp-action="Create">Tiếp nhận hồ sơ</a>
+        <a asp-action="Create" class="btn btn-success">+ Tiếp nhận hồ sơ mới</a>
     }
 </div>
 
-@if (TempData["Success"] is string ok)
+@if (TempData["Success"] != null)
 {
-    <div class="alert alert-success">@ok</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 }
-@if (TempData["Error"] is string err)
-{
-    <div class="alert alert-danger">@err</div>
-}
 
-<form method="get" asp-action="Index" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <input name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="Tên hoặc mã nhân sự" maxlength="100" />
+<!-- Form tìm kiếm an toàn (Mục 9 & Mục 10: Tham số hóa truy vấn chống SQL Injection) -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Từ khóa (Mã hoặc Họ tên):</label>
+                <input type="text" name="q" class="form-control" placeholder="Nhập tên hoặc mã..." value="@Model.Q" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đơn vị / Khoa:</label>
+                <select name="donViId" class="form-select">
+                    <option value="">-- Tất cả đơn vị --</option>
+                    @foreach (var dv in Model.DonVis)
+                    {
+                        if (Model.DonViId == dv.Id)
+                        {
+                            <option value="@dv.Id" selected="selected">@dv.Ten</option>
+                        }
+                        else
+                        {
+                            <option value="@dv.Id">@dv.Ten</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-5 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+            </div>
+        </form>
     </div>
-    <div class="col-md-3">
-        <select name="donViId" class="form-select form-select-sm">
-            <option value="">Tất cả đơn vị</option>
-            @foreach (var d in Model.DonVis)
-            {
-                <option value="@d.Id" selected="@(Model.DonViId == d.Id)">@d.Ten</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="tinhTrang" class="form-select form-select-sm">
-            <option value="">Mọi tình trạng</option>
-            @foreach (var t in NhanSuText.TinhTrangs)
-            {
-                <option value="@t" selected="@(Model.TinhTrang == t)">@NhanSuText.TinhTrang(t)</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="trangThai" class="form-select form-select-sm">
-            <option value="">Mọi trạng thái hồ sơ</option>
-            @foreach (var t in NhanSuText.TrangThais)
-            {
-                <option value="@t" selected="@(Model.TrangThai == t)">@NhanSuText.TrangThai(t)</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-primary">Tìm</button>
-        <a asp-action="Index" class="btn btn-sm btn-link">Xóa lọc</a>
-    </div>
-</form>
-
-<p class="text-muted small">Tìm thấy @Model.Total hồ sơ.</p>
-
-<div class="table-responsive">
-    <table class="table table-sm align-middle">
-        <thead>
-            <tr>
-                <th><a asp-action="Index" asp-route-sort="ma" asp-route-dir="@NextDir("ma")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Mã nhân sự</a></th>
-                <th><a asp-action="Index" asp-route-sort="ten" asp-route-dir="@NextDir("ten")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Họ tên</a></th>
-                <th><a asp-action="Index" asp-route-sort="donvi" asp-route-dir="@NextDir("donvi")" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Đơn vị</a></th>
-                <th>Tình trạng</th>
-                <th>Trạng thái hồ sơ</th>
-                <th>Công khai</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var n in Model.Items)
-            {
-                <tr>
-                    <td>@n.MaHrm</td>
-                    <td>@n.HoTen</td>
-                    <td>@n.DonVi</td>
-                    <td>@NhanSuText.TinhTrang(n.TinhTrangCongTac)</td>
-                    <td>@NhanSuText.TrangThai(n.TrangThaiHoSo)</td>
-                    <td>@(n.CongKhai ? "Có" : "Không")</td>
-                    <td><a asp-action="Details" asp-route-id="@n.Id" class="btn btn-sm btn-outline-primary">Xem</a></td>
-                </tr>
-            }
-            @if (!Model.Items.Any())
-            {
-                <tr><td colspan="7" class="text-center text-muted">Không có hồ sơ nào.</td></tr>
-            }
-        </tbody>
-    </table>
 </div>
 
-<nav>
-    <ul class="pagination pagination-sm">
-        <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Trước</a>
-        </li>
-        <li class="page-item disabled"><span class="page-link">@(Model.PageNumber) / @(Model.TotalPages)</span></li>
-        <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai">Sau</a>
-        </li>
-    </ul>
-</nav>
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã HRM</th>
+                        <th>Họ và tên</th>
+                        <th>Đơn vị</th>
+                        <th>Tình trạng</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Không tìm thấy hồ sơ phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td><strong>@item.MaHrm</strong></td>
+                                <td>@item.HoTen</td>
+                                <td>@item.DonVi</td>
+                                <td><span class="badge bg-info text-dark">@item.TinhTrangCongTac</span></td>
+                                <td><span class="badge bg-secondary">@item.TrangThaiHoSo</span></td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Xem</a>
+                                    @if (Model.CoQuyenSua)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span>Tổng số: <strong>@Model.Total</strong> hồ sơ</span>
+            <ul class="pagination mb-0">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId">@i</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

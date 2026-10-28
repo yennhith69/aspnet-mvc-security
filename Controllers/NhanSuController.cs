@@ -5,7 +5,6 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
-
 [Authorize(Policy = Permissions.HoSoXem)]
 public class NhanSuController : Controller
 {
@@ -14,8 +13,11 @@ public class NhanSuController : Controller
     private readonly IAuthorizationService _auth;
     private readonly ILogger<NhanSuController> _logger;
 
-    public NhanSuController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
-        IAuthorizationService auth, ILogger<NhanSuController> logger)
+    public NhanSuController(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> userManager,
+        IAuthorizationService auth,
+        ILogger<NhanSuController> logger)
     {
         _db = db;
         _userManager = userManager;
@@ -23,38 +25,60 @@ public class NhanSuController : Controller
         _logger = logger;
     }
 
-    // ---------- Danh sách, tìm kiếm, phân trang (mục 10, 18, 19) ----------
+    // ---------- Danh sách, tìm kiếm, phân trang (Mục 9, 10, 18, 19) ----------
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, int? donViId, string? tinhTrang, string? trangThai,
-        string sort = "ma", string dir = "asc", int page = 1)
+    public async Task<IActionResult> Index(
+        string? q,
+        int? donViId,
+        string? tinhTrang,
+        string? trangThai,
+        string sort = "ma",
+        string dir = "asc",
+        int page = 1)
     {
         const int pageSize = 10;
         IQueryable<NhanSu> query = await ScopedAsync();
 
+        // EF Core chuyển LINQ Contains thành truy vấn tham số hóa (@p0), triệt tiêu SQL Injection
         if (!string.IsNullOrWhiteSpace(q))
         {
             q = q.Trim();
             if (q.Length > 100) q = q[..100];
-            query = query.Where(x => x.HoTen.Contains(q) || x.MaHrm.Contains(q));   // EF tham số hóa
+            query = query.Where(x => x.HoTen.Contains(q) || x.MaHrm.Contains(q));
         }
-        else q = null;
+        else
+        {
+            q = null;
+        }
 
-        if (donViId.HasValue) query = query.Where(x => x.DonViId == donViId.Value);
+        if (donViId.HasValue)
+        {
+            query = query.Where(x => x.DonViId == donViId.Value);
+        }
 
         if (!string.IsNullOrEmpty(tinhTrang) && NhanSuText.TinhTrangs.Contains(tinhTrang))
+        {
             query = query.Where(x => x.TinhTrangCongTac == tinhTrang);
-        else tinhTrang = null;
+        }
+        else
+        {
+            tinhTrang = null;
+        }
 
         if (!string.IsNullOrEmpty(trangThai) && NhanSuText.TrangThais.Contains(trangThai))
+        {
             query = query.Where(x => x.TrangThaiHoSo == trangThai);
-        else trangThai = null;
+        }
+        else
+        {
+            trangThai = null;
+        }
 
         var total = await query.CountAsync();
         var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        // Chỉ nhận cột sắp xếp nằm trong danh sách cho phép
         var desc = dir == "desc";
         if (!desc) dir = "asc";
         query = sort switch
@@ -96,26 +120,27 @@ public class NhanSuController : Controller
         return View(vm);
     }
 
-    // ---------- Chi tiết (mục 18: chỉ xem hồ sơ trong phạm vi của mình) ----------
+    // ---------- Chi tiết (Mục 18: chỉ xem hồ sơ trong phạm vi quyền) ----------
 
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
         var scoped = await ScopedAsync();
         var ns = await scoped.Include(x => x.DonVi).FirstOrDefaultAsync(x => x.Id == id);
-        if (ns == null) return NotFound();     // ngoài phạm vi thì không lộ hồ sơ có tồn tại hay không
+        if (ns == null) return NotFound();
 
         var coXemGiayTo = (await _auth.AuthorizeAsync(User, Permissions.GiayToXem)).Succeeded;
         var giayTos = await _db.GiayToDinhDanhs.AsNoTracking()
             .Where(x => x.NhanSuId == ns.Id)
             .Select(x => new GiayToView { Loai = x.Loai, So = x.So })
             .ToListAsync();
+
         if (!coXemGiayTo)
         {
             foreach (var g in giayTos) g.So = Mask(g.So);
             ns.Email = MaskEmail(ns.Email);
             ns.DienThoai = ns.DienThoai == null ? null : Mask(ns.DienThoai);
-        }    // che số giấy tờ với vai trò không có quyền
+        }
 
         string? chucVu = ns.ChucVuId.HasValue
             ? await _db.ChucVus.AsNoTracking().Where(x => x.Id == ns.ChucVuId).Select(x => x.Ten).FirstOrDefaultAsync()
@@ -144,9 +169,9 @@ public class NhanSuController : Controller
 
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(NhanSuCreateViewModel vm)
     {
-        // Không tin dữ liệu từ form: kiểm tra lại mọi giá trị chọn
         if (vm.NgaySinh.HasValue && (vm.NgaySinh.Value.Year < 1930 || vm.NgaySinh.Value > DateTime.Today.AddYears(-18)))
             ModelState.AddModelError(nameof(vm.NgaySinh), "Ngày sinh không hợp lệ (phải đủ 18 tuổi).");
         if (!NhanSuText.GioiTinhs.Contains(vm.GioiTinh))
@@ -161,7 +186,6 @@ public class NhanSuController : Controller
         var hoTen = vm.HoTen.Trim();
         var so = vm.SoGiayTo.Trim().ToUpperInvariant();
 
-        // Kiểm tra trùng
         if (ModelState.IsValid)
         {
             if (await _db.GiayToDinhDanhs.AnyAsync(x => x.Loai == vm.LoaiGiayTo && x.So == so))
@@ -177,7 +201,6 @@ public class NhanSuController : Controller
             return View(vm);
         }
 
-        // Cấp mã duy nhất: thử lại nếu hai người cùng lấy một số
         NhanSu? created = null;
         for (var attempt = 0; attempt < 3 && created == null; attempt++)
         {
@@ -221,7 +244,7 @@ public class NhanSuController : Controller
             return View(vm);
         }
 
-        await WriteAuditAsync("TiepNhanHoSo", created.Id, $"Mã {created.MaHrm}");   // không ghi số giấy tờ
+        await WriteAuditAsync("TiepNhanHoSo", created.Id, $"Mã {created.MaHrm}");
         _logger.LogInformation("{User} tiếp nhận hồ sơ {Ma}", User.Identity?.Name, created.MaHrm);
 
         TempData["Success"] = $"Đã tiếp nhận hồ sơ, mã nhân sự: {created.MaHrm}.";
@@ -256,6 +279,7 @@ public class NhanSuController : Controller
 
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(NhanSuEditViewModel vm)
     {
         var ns = await _db.NhanSus.FindAsync(vm.Id);
@@ -298,7 +322,6 @@ public class NhanSuController : Controller
         Track("TinhTrangCongTac", ns.TinhTrangCongTac, vm.TinhTrangCongTac);
         Track("CongKhai", ns.CongKhai, vm.CongKhai);
 
-        // Chỉ cập nhật các trường được phép (không đụng MaHrm, TrangThaiHoSo)
         ns.HoTen = hoTen;
         ns.NgaySinh = vm.NgaySinh!.Value;
         ns.GioiTinh = vm.GioiTinh;
@@ -318,17 +341,15 @@ public class NhanSuController : Controller
         return RedirectToAction(nameof(Details), new { id = ns.Id });
     }
 
-    // ---------- Xác nhận hồ sơ (F1) ----------
+    // ---------- Xác nhận hồ sơ (F1, Mục 2: Gọi Stored Procedure có tham số) ----------
 
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoXacNhan)]
-    [HttpPost]
-    [Authorize(Policy = Permissions.HoSoXacNhan)]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Confirm(int id)
     {
         if (!await _db.NhanSus.AsNoTracking().AnyAsync(x => x.Id == id)) return NotFound();
 
-        // Gọi stored procedure với tham số (không nối chuỗi): kiểm tra trạng thái, cập nhật, ghi nhật ký
         var thanhCong = new SqlParameter("@ThanhCong", SqlDbType.Bit) { Direction = ParameterDirection.Output };
         await _db.Database.ExecuteSqlRawAsync(
             "EXEC dbo.sp_XacNhanHoSo @NhanSuId, @UserId, @UserName, @Ip, @ThanhCong OUTPUT",
@@ -349,10 +370,9 @@ public class NhanSuController : Controller
         }
         return RedirectToAction(nameof(Details), new { id });
     }
+
     // ---------- Hàm hỗ trợ ----------
 
-    // Phạm vi xem hồ sơ theo vai trò (mục 3, 18): HR và Admin xem tất cả,
-    // Manager chỉ trong đơn vị mình, Lecturer chỉ hồ sơ của chính mình
     private async Task<IQueryable<NhanSu>> ScopedAsync()
     {
         IQueryable<NhanSu> q = _db.NhanSus.AsNoTracking();
