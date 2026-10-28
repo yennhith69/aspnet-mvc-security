@@ -1,8 +1,11 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +32,28 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>()
 .AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
+// Cấu hình JWT Bearer phục vụ Mục 22 song song với Cookie MVC
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? "ChuoiKhoaBaoMatJWTChoHeThongHRM2026_RatDaiVaAnToan!";
+
+builder.Services.AddAuthentication()
+    .AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -40,7 +65,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// Cấu hình bảo vệ Cookie chống CSRF cho Anti-Forgery Token (Mục 12)
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-HrmAntiforgery";
@@ -67,7 +91,6 @@ builder.Services.AddControllersWithViews(options =>
 
 var app = builder.Build();
 
-// Gắn các HTTP Security Headers phòng chống XSS, Clickjacking và Sniffing (Mục 11, Mục 13)
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
