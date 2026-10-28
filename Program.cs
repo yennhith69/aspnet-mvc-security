@@ -1,20 +1,24 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. Cấu hình DbContext kết nối SQL Server có gắn Interceptor Session_Context (Mục 3, 4)
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SessionContextInterceptor>();
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
            .AddInterceptors(sp.GetRequiredService<SessionContextInterceptor>()));
 
+// 2. Cấu hình ASP.NET Core Identity (Mục 14, 15)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 10;
@@ -32,7 +36,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>()
 .AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
-// Cấu hình JWT Bearer phục vụ Mục 22 song song với Cookie MVC
+// 3. Cấu hình JWT Bearer phục vụ API Authentication (Mục 22) song song với Cookie MVC (Mục 16)
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? "ChuoiKhoaBaoMatJWTChoHeThongHRM2026_RatDaiVaAnToan!";
 
@@ -65,6 +69,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+// 4. Cấu hình chống tấn công CSRF chặt chẽ cho Anti-Forgery Token (Mục 12)
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-HrmAntiforgery";
@@ -72,6 +77,36 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.HeaderName = "X-CSRF-TOKEN";
+});
+
+// 5. Cấu hình Giới hạn tần suất gọi - Rate Limiting (Mục 23)
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Giới hạn khắt khe cho API đăng nhập / xác thực: Tối đa 10 request / 1 phút trên mỗi IP
+    options.AddPolicy("auth_policy", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    // Giới hạn chung cho toàn bộ hệ thống: Tối đa 100 request / 1 phút trên mỗi IP
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
 });
 
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
@@ -91,6 +126,7 @@ builder.Services.AddControllersWithViews(options =>
 
 var app = builder.Build();
 
+// 6. Gắn các HTTP Security Headers phòng chống XSS, Clickjacking và Sniffing (Mục 11, 13)
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
@@ -115,6 +151,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Kích hoạt Middleware Rate Limiting trước Authentication (Mục 23)
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

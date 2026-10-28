@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 
 namespace mvcSecurity.Controllers.Api
@@ -23,6 +24,7 @@ namespace mvcSecurity.Controllers.Api
 
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth_policy")] // Giới hạn tối đa 10 lần/phút (Mục 23)
         public async Task<IActionResult> Login([FromBody] ApiLoginRequest request)
         {
             if (!ModelState.IsValid)
@@ -34,6 +36,12 @@ namespace mvcSecurity.Controllers.Api
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
             {
                 return Unauthorized(new { message = "Email hoặc mật khẩu không chính xác." });
+            }
+
+            // Kiểm tra trạng thái khóa tài khoản chuẩn Identity
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow)
+            {
+                return Unauthorized(new { message = "Tài khoản hiện đang bị tạm khóa." });
             }
 
             var userRoles = await _userManager.GetRolesAsync(user);
