@@ -6,10 +6,8 @@ using Microsoft.EntityFrameworkCore;
 [Authorize(Policy = Permissions.HoSoXem)]
 public class TrinhDoController : Controller
 {
-    private const long MaxBytes = 5 * 1024 * 1024;
-
-    // Whitelist phần mở rộng, kiểu nội dung và chữ ký đầu tệp (mục 14, 30)
-    private static readonly Dictionary<string, (string Mime, byte[] Sig)> Allowed = new()
+    // Bảng tra cứu chữ ký đầu tệp (Magic Bytes) phòng chống tệp giả mạo (Mục 30)
+    private static readonly Dictionary<string, (string Mime, byte[] Sig)> AllowedSignatures = new()
     {
         [".pdf"] = ("application/pdf", new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D }),
         [".jpg"] = ("image/jpeg", new byte[] { 0xFF, 0xD8, 0xFF }),
@@ -23,9 +21,15 @@ public class TrinhDoController : Controller
     private readonly IAuthorizationService _auth;
     private readonly ILogger<TrinhDoController> _logger;
     private readonly string _dir;
+    private readonly long _maxBytes;
 
-    public TrinhDoController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
-        HoSoScopeService scope, IAuthorizationService auth, IWebHostEnvironment env,
+    public TrinhDoController(
+        ApplicationDbContext db,
+        UserManager<ApplicationUser> userManager,
+        HoSoScopeService scope,
+        IAuthorizationService auth,
+        IWebHostEnvironment env,
+        IConfiguration config,
         ILogger<TrinhDoController> logger)
     {
         _db = db;
@@ -33,8 +37,11 @@ public class TrinhDoController : Controller
         _scope = scope;
         _auth = auth;
         _logger = logger;
-        // Ngoài wwwroot nên không truy cập trực tiếp được bằng URL
-        _dir = Path.Combine(env.ContentRootPath, "App_Data", "minhchung");
+
+        // Đọc cấu hình từ appsettings.json thay vì hardcode (Mục 29)
+        var relativePath = config["FileStorage:UploadPath"] ?? "App_Data/minhchung";
+        _dir = Path.Combine(env.ContentRootPath, relativePath);
+        _maxBytes = config.GetValue<long>("FileStorage:MaxFileSizeBytes", 5 * 1024 * 1024);
     }
 
     [HttpGet]
@@ -80,6 +87,7 @@ public class TrinhDoController : Controller
 
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
     [RequestSizeLimit(6 * 1024 * 1024)]
     public async Task<IActionResult> Create(TrinhDoCreateViewModel vm)
     {
@@ -107,13 +115,12 @@ public class TrinhDoController : Controller
         if (coTep)
         {
             var ext = Path.GetExtension(vm.Tep!.FileName).ToLowerInvariant();
-            var storedName = Guid.NewGuid().ToString("N") + ext;      // không tin tên gốc
+            var storedName = Guid.NewGuid().ToString("N") + ext;
             Directory.CreateDirectory(_dir);
             fullPath = Path.Combine(_dir, storedName);
 
-            // CreateNew: báo lỗi nếu tệp đã tồn tại, không bao giờ ghi đè
             await using (var fs = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write))
-                await vm.Tep.CopyToAsync(fs);
+                await vm.Tep!.CopyToAsync(fs);
 
             tep = new TepMinhChung
             {
@@ -132,6 +139,7 @@ public class TrinhDoController : Controller
                 _db.TepMinhChungs.Add(tep);
                 await _db.SaveChangesAsync();
             }
+
             _db.TrinhDos.Add(new TrinhDo
             {
                 NhanSuId = vm.NhanSuId,
@@ -144,7 +152,10 @@ public class TrinhDoController : Controller
         }
         catch
         {
-            if (fullPath != null && System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+            if (fullPath != null && System.IO.File.Exists(fullPath))
+            {
+                System.IO.File.Delete(fullPath);
+            }
             throw;
         }
 
@@ -159,13 +170,13 @@ public class TrinhDoController : Controller
             Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
         });
         await _db.SaveChangesAsync();
-        _logger.LogInformation("{User} thêm trình độ cho hồ sơ {Id}", User.Identity?.Name, vm.NhanSuId);
 
+        _logger.LogInformation("{User} thêm trình độ cho hồ sơ {Id}", User.Identity?.Name, vm.NhanSuId);
         TempData["Success"] = "Đã thêm trình độ.";
         return RedirectToAction(nameof(Index), new { nhanSuId = vm.NhanSuId });
     }
 
-    // Tải tệp qua action có kiểm tra quyền (mục 18, 30)
+    // Tải tệp kiểm tra quyền sở hữu và gán Header chống MIME Sniffing (Mục 13, 18, 30)
     [HttpGet]
     public async Task<IActionResult> Download(int id)
     {
@@ -175,28 +186,28 @@ public class TrinhDoController : Controller
         var stored = Path.GetFileName(f.TenLuu);
         var ext = Path.GetExtension(stored).ToLowerInvariant();
         var path = Path.Combine(_dir, stored);
-        if (!Allowed.TryGetValue(ext, out var info) || !System.IO.File.Exists(path)) return NotFound();
+
+        if (!AllowedSignatures.TryGetValue(ext, out var info) || !System.IO.File.Exists(path))
+            return NotFound();
 
         _logger.LogInformation("{User} tải tệp minh chứng {Id}", User.Identity?.Name, id);
         Response.Headers["X-Content-Type-Options"] = "nosniff";
-        return PhysicalFile(path, info.Mime, f.TenGoc);     // gửi dạng tệp đính kèm
+        return PhysicalFile(path, info.Mime, f.TenGoc);
     }
-
-    // ---------- Hàm hỗ trợ ----------
 
     private async Task<string?> ValidateFileAsync(IFormFile f)
     {
-        if (f.Length > MaxBytes) return "Tệp vượt quá 5 MB.";
+        if (f.Length > _maxBytes) return "Tệp vượt quá dung lượng cho phép (5 MB).";
 
         var ext = Path.GetExtension(f.FileName).ToLowerInvariant();
-        if (!Allowed.TryGetValue(ext, out var info))
-            return "Chỉ chấp nhận tệp PDF, JPG hoặc PNG.";
+        if (!AllowedSignatures.TryGetValue(ext, out var info))
+            return "Chỉ chấp nhận định dạng tệp PDF, JPG hoặc PNG.";
 
         var header = new byte[8];
         await using var s = f.OpenReadStream();
         var read = await s.ReadAsync(header, 0, header.Length);
         if (read < info.Sig.Length || !header.Take(info.Sig.Length).SequenceEqual(info.Sig))
-            return "Nội dung tệp không khớp với phần mở rộng.";
+            return "Nội dung tệp không khớp với phần mở rộng thực tế.";
 
         return null;
     }
@@ -213,8 +224,7 @@ public class TrinhDoController : Controller
     private async Task RejectAsync(int nhanSuId, string rawName, string reason)
     {
         var name = SafeName(rawName);
-        _logger.LogWarning("Tải tệp bị từ chối: {User}, tệp {Name}, lý do {Reason}",
-            User.Identity?.Name, name, reason);
+        _logger.LogWarning("Tải tệp bị từ chối: {User}, tệp {Name}, lý do {Reason}", User.Identity?.Name, name, reason);
 
         _db.AuditLogs.Add(new AuditLog
         {
