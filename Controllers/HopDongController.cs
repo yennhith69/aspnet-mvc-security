@@ -68,7 +68,7 @@ public class HopDongController : Controller
                 MaHrm = n.MaHrm,
                 HoTen = n.HoTen,
                 Loai = h.Loai,
-                DenNgay = h.DenNgay.Value
+                DenNgay = h.DenNgay!.Value
             }).Take(200).ToListAsync();                              // giới hạn số dòng (mục 27)
 
         return View(new HopDongSapHetHanViewModel { Items = rows, Days = days });

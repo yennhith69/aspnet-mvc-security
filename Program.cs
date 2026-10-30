@@ -11,14 +11,14 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình DbContext kết nối SQL Server có gắn Interceptor Session_Context (Mục 3, 4)
+// 1. DbContext kết nối SQL Server có gắn Interceptor Session_Context (Mục 3, 4)
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SessionContextInterceptor>();
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
            .AddInterceptors(sp.GetRequiredService<SessionContextInterceptor>()));
 
-// 2. Cấu hình ASP.NET Core Identity (Mục 14, 15)
+// 2. ASP.NET Core Identity (Mục 9, 17)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 10;
@@ -36,9 +36,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>()
 .AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
-// 3. Cấu hình JWT Bearer phục vụ API Authentication (Mục 22) song song với Cookie MVC (Mục 16)
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? "ChuoiKhoaBaoMatJWTChoHeThongHRM2026_RatDaiVaAnToan!";
+// 3. JWT Bearer cho API (Mục 22) song song với Cookie MVC (Mục 16)
+// Khóa bắt buộc nằm trong User Secrets hoặc biến môi trường, KHÔNG ghi trong mã nguồn (Mục 13)
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    throw new InvalidOperationException(
+        "Thiếu Jwt:Key hoặc quá ngắn (tối thiểu 32 byte). Đặt bằng: dotnet user-secrets set \"Jwt:Key\" \"<chuỗi ngẫu nhiên>\"");
 
 builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
@@ -69,7 +72,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// 4. Cấu hình chống tấn công CSRF chặt chẽ cho Anti-Forgery Token (Mục 12)
+// 4. Anti-Forgery Token chặt chẽ (Mục 12)
 builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-HrmAntiforgery";
@@ -79,12 +82,12 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
 });
 
-// 5. Cấu hình Giới hạn tần suất gọi - Rate Limiting (Mục 23)
+// 5. Giới hạn tần suất - Rate Limiting (Mục 26)
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // Giới hạn khắt khe cho API đăng nhập / xác thực: Tối đa 10 request / 1 phút trên mỗi IP
+    // API đăng nhập: tối đa 10 request / phút / IP
     options.AddPolicy("auth_policy", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
@@ -96,7 +99,7 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
-    // Giới hạn chung cho toàn bộ hệ thống: Tối đa 100 request / 1 phút trên mỗi IP
+    // Toàn hệ thống: tối đa 100 request / phút / IP
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
@@ -126,7 +129,7 @@ builder.Services.AddControllersWithViews(options =>
 
 var app = builder.Build();
 
-// 6. Gắn các HTTP Security Headers phòng chống XSS, Clickjacking và Sniffing (Mục 11, 13)
+// 6. HTTP Security Headers chống XSS, Clickjacking, Sniffing (Mục 11, 12)
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
@@ -143,6 +146,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Ngăn lộ thông tin qua lỗi (Mục 23)
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -152,7 +156,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-// Kích hoạt Middleware Rate Limiting trước Authentication (Mục 23)
+// Rate Limiting đặt trước Authentication (Mục 26)
 app.UseRateLimiter();
 
 app.UseAuthentication();
