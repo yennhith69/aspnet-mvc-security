@@ -65,8 +65,10 @@ FOR SERVER AUDIT HrmServerAudit
 WITH (STATE = ON);
 GO
 
--- 4. Cấp quyền cho hrm_auditor đọc log kiểm toán (tương thích SQL Server 2019)
+-- 4. hrm_auditor KHÔNG được cấp quyền mức server (không dùng CONTROL SERVER, mục 1).
+--    hrm_auditor chỉ đọc bảng LoginLogs, AuditLogs (GRANT SELECT ở 001_LoginsRoles.sql).
+--    File audit (.sqlaudit) do tài khoản quản trị Windows đọc bằng sys.fn_get_audit_file.
 USE master;
 GO
-GRANT CONTROL SERVER TO hrm_auditor;
+REVOKE CONTROL SERVER FROM hrm_auditor;   -- an toàn khi chạy lại nhiều lần
 GO
