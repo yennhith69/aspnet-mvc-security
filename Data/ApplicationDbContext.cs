@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ThongTinNhayCam> ThongTinNhayCams => Set<ThongTinNhayCam>();
     public DbSet<NangLuong> NangLuongs => Set<NangLuong>();
     public DbSet<KhenThuong> KhenThuongs => Set<KhenThuong>();
+    public DbSet<KyLuat> KyLuats => Set<KyLuat>();
     public DbSet<GioGiang> GioGiangs => Set<GioGiang>();
     public DbSet<HoatDongNCKH> HoatDongNCKHs => Set<HoatDongNCKH>();
     public DbSet<Quyen> Quyens => Set<Quyen>();
@@ -63,6 +64,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         b.Entity<ThongTinNhayCam>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<NangLuong>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<KhenThuong>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<KyLuat>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<GioGiang>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<HoatDongNCKH>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<VaiTroQuyen>().HasOne(x => x.Quyen).WithMany().HasForeignKey(x => x.QuyenId).OnDelete(DeleteBehavior.Restrict);

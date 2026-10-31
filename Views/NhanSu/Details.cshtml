@@ -57,12 +57,20 @@
     <dd class="col-sm-9">
         @foreach (var g in Model.GiayTos)
         {
-            <div>@g.Loai: @g.So</div>
+            <div>@g.Loai: @g.So (@g.NgayCap?.ToString("dd/MM/yyyy") - @g.NoiCap)
+                @if (Model.CoQuyenSua) { <a asp-action="EditGiayTo" asp-route-id="@g.Id">Sửa</a> }
+            </div>
         }
     </dd>
 </dl>
 <p>
     <a class="btn btn-outline-secondary" asp-controller="TrinhDo" asp-action="Index" asp-route-nhanSuId="@n.Id">Trình độ và minh chứng</a>
     <a class="btn btn-outline-secondary" asp-controller="HopDong" asp-action="Index" asp-route-nhanSuId="@n.Id">Hợp đồng</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="NangLuong" asp-route-nhanSuId="@n.Id">Nâng lương</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="KhenThuong" asp-route-nhanSuId="@n.Id">Khen thưởng</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="KyLuat" asp-route-nhanSuId="@n.Id">Kỷ luật</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="GioGiang" asp-route-nhanSuId="@n.Id">Giờ giảng</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="Nckh" asp-route-nhanSuId="@n.Id">NCKH</a>
+    <a class="btn btn-outline-secondary" asp-controller="M01" asp-action="NhayCam" asp-route-nhanSuId="@n.Id">Thông tin nhạy cảm</a>
     <a class="btn btn-outline-secondary" asp-controller="QuaTrinhCongTac" asp-action="Index" asp-route-nhanSuId="@n.Id">Quá trình công tác</a>
 </p>

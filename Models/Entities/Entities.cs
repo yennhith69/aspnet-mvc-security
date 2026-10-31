@@ -96,6 +96,15 @@ public class KhenThuong
     public string NoiDung { get; set; } = ""; public DateTime Ngay { get; set; }
 }
 
+public class KyLuat
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public string Loai { get; set; } = "";
+    public string NoiDung { get; set; } = "";
+    public DateTime Ngay { get; set; }
+}
+
 public class GioGiang { public int Id { get; set; } public int NhanSuId { get; set; } public string NamHoc { get; set; } = ""; public decimal SoGio { get; set; } }
 public class HoatDongNCKH { public int Id { get; set; } public int NhanSuId { get; set; } public string TenHoatDong { get; set; } = ""; public int Nam { get; set; } }
 

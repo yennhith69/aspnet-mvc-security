@@ -1,0 +1,22 @@
+@model M01ReportViewModel
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@{
+    ViewData["Title"] = "Báo cáo M01";
+}
+<h1 class="h3 mb-4">Báo cáo tổng hợp M01</h1>
+<div class="d-flex gap-2 mb-4 no-print">
+    <button type="button" class="btn btn-primary" data-print-report>In báo cáo</button>
+    @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.BaoCaoIn)).Succeeded)
+    {
+        <a class="btn btn-outline-secondary" asp-action="XuatBaoCaoCsv">Xuất CSV</a>
+    }
+</div>
+<div class="row g-3">
+    <div class="col-md-3"><div class="card p-3"><small>Tổng nhân sự</small><strong class="fs-3">@Model.TongNhanSu</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><small>Hồ sơ đã xác nhận</small><strong class="fs-3">@Model.HoSoDaXacNhan</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><small>Hợp đồng sắp hết hạn</small><strong class="fs-3">@Model.HopDongSapHetHan</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><small>Giờ giảng</small><strong class="fs-3">@Model.TongGioGiang</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><small>Hoạt động NCKH</small><strong class="fs-3">@Model.HoatDongNckh</strong></div></div>
+</div>
+<p class="text-muted mt-4">Số liệu được giới hạn theo phạm vi hồ sơ của tài khoản hiện tại.</p>

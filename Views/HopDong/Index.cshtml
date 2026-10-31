@@ -39,6 +39,10 @@
                     <td>@(h.DenNgay.HasValue ? h.DenNgay.Value.ToString("dd/MM/yyyy") : "Không thời hạn")</td>
                     <td>@tt</td>
                     <td>
+                        @if (Model.CoQuyenSua)
+                        {
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@h.Id">Sửa</a>
+                        }
                         @if (Model.CoQuyenSua && h.TrangThai == "HieuLuc")
                         {
                             <form asp-action="Terminate" asp-route-id="@h.Id" method="post" class="d-inline">

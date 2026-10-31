@@ -114,6 +114,62 @@ public class QuaTrinhCongTacController : Controller
         return RedirectToAction(nameof(Index), new { nhanSuId = vm.NhanSuId });
     }
 
+    [HttpGet]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var ct = await _db.QuaTrinhCongTacs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (ct == null || !await _scope.CanViewAsync(User, ct.NhanSuId)) return NotFound();
+        await LoadListsAsync();
+        return View(new CongTacCreateViewModel
+        {
+            Id = ct.Id, NhanSuId = ct.NhanSuId, DonViId = ct.DonViId,
+            ChucVuId = ct.ChucVuId, TuNgay = ct.TuNgay, DenNgay = ct.DenNgay
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(CongTacCreateViewModel vm)
+    {
+        var ct = await _db.QuaTrinhCongTacs.FirstOrDefaultAsync(x => x.Id == vm.Id);
+        if (ct == null || ct.NhanSuId != vm.NhanSuId ||
+            !await _scope.CanViewAsync(User, vm.NhanSuId)) return NotFound();
+
+        if (!vm.DonViId.HasValue || !await _db.DonVis.AnyAsync(x => x.Id == vm.DonViId.Value))
+            ModelState.AddModelError(nameof(vm.DonViId), "Đơn vị không tồn tại.");
+        if (vm.ChucVuId.HasValue && !await _db.ChucVus.AnyAsync(x => x.Id == vm.ChucVuId.Value))
+            ModelState.AddModelError(nameof(vm.ChucVuId), "Chức vụ không tồn tại.");
+        if (vm.TuNgay.HasValue && (vm.TuNgay.Value.Year < 1980 || vm.TuNgay.Value > DateTime.Today.AddYears(1)))
+            ModelState.AddModelError(nameof(vm.TuNgay), "Ngày bắt đầu không hợp lệ.");
+        if (vm.TuNgay.HasValue && vm.DenNgay.HasValue && vm.DenNgay.Value < vm.TuNgay.Value)
+            ModelState.AddModelError(nameof(vm.DenNgay), "Ngày kết thúc phải sau ngày bắt đầu.");
+        if (ModelState.IsValid)
+        {
+            var start = vm.TuNgay!.Value;
+            var end = vm.DenNgay ?? DateTime.MaxValue;
+            if (await _db.QuaTrinhCongTacs.AnyAsync(x =>
+                x.Id != vm.Id && x.NhanSuId == vm.NhanSuId && x.TuNgay <= end &&
+                (x.DenNgay == null || x.DenNgay >= start)))
+                ModelState.AddModelError("", "Giai đoạn này trùng với một giai đoạn công tác khác.");
+        }
+        if (!ModelState.IsValid)
+        {
+            await LoadListsAsync();
+            return View(vm);
+        }
+
+        ct.DonViId = vm.DonViId!.Value;
+        ct.ChucVuId = vm.ChucVuId;
+        ct.TuNgay = vm.TuNgay!.Value;
+        ct.DenNgay = vm.DenNgay;
+        await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaCongTac", ct.NhanSuId, $"CongTac {ct.Id}");
+        TempData["Success"] = "Đã cập nhật quá trình công tác.";
+        return RedirectToAction(nameof(Index), new { nhanSuId = ct.NhanSuId });
+    }
+
     // Kết thúc giai đoạn đang mở: đặt ngày kết thúc là hôm nay (không xóa)
     [HttpPost]
     [Authorize(Policy = Permissions.HoSoSua)]

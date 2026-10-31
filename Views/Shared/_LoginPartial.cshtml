@@ -1,22 +1,27 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
 
 <nav class="sidebar-nav" aria-label="Điều hướng chính">
     @if (SignInManager.IsSignedIn(User))
     {
         <span class="sidebar-section">Điều hướng</span>
-        <a class="sidebar-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
-        <a class="sidebar-link" asp-controller="Home" asp-action="Privacy">Giới thiệu</a>
-        <a class="sidebar-link" asp-controller="NhanSu" asp-action="Index">Hồ sơ nhân sự</a>
-        <a class="sidebar-link" asp-controller="HopDong" asp-action="SapHetHan">Hợp đồng sắp hết hạn</a>
+        <a class="sidebar-link @(currentController == "Home" && currentAction == "Index" ? "is-active" : "")" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class="sidebar-link @(currentController == "Home" && currentAction == "Privacy" ? "is-active" : "")" asp-controller="Home" asp-action="Privacy">Giới thiệu</a>
+        <a class="sidebar-link @(currentController == "NhanSu" ? "is-active" : "")" asp-controller="NhanSu" asp-action="Index">Hồ sơ nhân sự</a>
+        <a class="sidebar-link @(currentController == "HopDong" ? "is-active" : "")" asp-controller="HopDong" asp-action="SapHetHan">Hợp đồng sắp hết hạn</a>
+        <a class="sidebar-link @(currentController == "M01" ? "is-active" : "")" asp-controller="M01" asp-action="BaoCao">Báo cáo</a>
         @if (User.IsInRole("Administrator"))
         {
             <span class="sidebar-section">Quản trị</span>
-            <a class="sidebar-link" asp-controller="AdminUsers" asp-action="Index">Tài khoản</a>
-            <a class="sidebar-link" asp-controller="AdminUsers" asp-action="LoginLogs">Nhật ký đăng nhập</a>
+            <a class="sidebar-link @(currentController == "AdminUsers" && currentAction == "Index" ? "is-active" : "")" asp-controller="AdminUsers" asp-action="Index">Tài khoản</a>
+            <a class="sidebar-link @(currentController == "AdminUsers" && currentAction == "LoginLogs" ? "is-active" : "")" asp-controller="AdminUsers" asp-action="LoginLogs">Nhật ký đăng nhập</a>
         }
         <span class="sidebar-section">Tài khoản</span>
-        <a class="sidebar-link" asp-controller="Account" asp-action="ChangePassword">@User.Identity!.Name</a>
+        <a class="sidebar-link @(currentController == "Account" ? "is-active" : "")" asp-controller="Account" asp-action="ChangePassword">@User.Identity!.Name</a>
         <form asp-controller="Account" asp-action="Logout" method="post" class="sidebar-logout">
             <button type="submit" class="sidebar-link sidebar-button">Đăng xuất</button>
         </form>

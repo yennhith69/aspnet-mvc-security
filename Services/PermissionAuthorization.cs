@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 public static class Permissions
 {
@@ -25,11 +26,13 @@ public class PermissionRequirement : IAuthorizationRequirement
 public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<PermissionHandler> _logger;
 
-    public PermissionHandler(ApplicationDbContext db, ILogger<PermissionHandler> logger)
+    public PermissionHandler(ApplicationDbContext db, IMemoryCache cache, ILogger<PermissionHandler> logger)
     {
         _db = db;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -37,10 +40,19 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
     {
         if (context.User.Identity?.IsAuthenticated != true) return;
 
-        var roles = context.User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        var roles = context.User.FindAll(ClaimTypes.Role)
+            .Select(c => c.Value)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToArray();
+        var cacheKey = $"permission:{requirement.Permission}:{string.Join("|", roles)}";
 
-        var allowed = await _db.VaiTroQuyens.AsNoTracking()
-            .AnyAsync(v => roles.Contains(v.RoleName) && v.Quyen!.Ma == requirement.Permission);
+        var allowed = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
+            return await _db.VaiTroQuyens.AsNoTracking()
+                .AnyAsync(v => roles.Contains(v.RoleName) && v.Quyen!.Ma == requirement.Permission);
+        });
 
         if (allowed)
             context.Succeed(requirement);

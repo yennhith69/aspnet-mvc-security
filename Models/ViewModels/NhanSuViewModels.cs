@@ -131,8 +131,22 @@ public class NhanSuEditViewModel
 
 public class GiayToView
 {
+    public int Id { get; set; }
     public string Loai { get; set; } = "";
     public string So { get; set; } = "";
+    public DateTime? NgayCap { get; set; }
+    public string? NoiCap { get; set; }
+}
+
+public class GiayToEditViewModel
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public string HoTen { get; set; } = "";
+    [Required] public string Loai { get; set; } = "";
+    [Required, StringLength(20)] public string So { get; set; } = "";
+    [DataType(DataType.Date)] public DateTime? NgayCap { get; set; }
+    [StringLength(200)] public string? NoiCap { get; set; }
 }
 
 public class NhanSuDetailsViewModel

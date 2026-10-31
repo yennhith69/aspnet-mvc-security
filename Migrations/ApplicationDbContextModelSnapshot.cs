@@ -16,7 +16,7 @@ namespace mvcSecurity.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -324,6 +324,35 @@ namespace mvcSecurity.Migrations
                     b.HasIndex("NhanSuId");
 
                     b.ToTable("KhenThuongs");
+                });
+
+            modelBuilder.Entity("KyLuat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Loai")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Ngay")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("NhanSuId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("KyLuats");
                 });
 
             modelBuilder.Entity("LichSuMatKhau", b =>
@@ -827,6 +856,15 @@ namespace mvcSecurity.Migrations
                 });
 
             modelBuilder.Entity("KhenThuong", b =>
+                {
+                    b.HasOne("NhanSu", null)
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("KyLuat", b =>
                 {
                     b.HasOne("NhanSu", null)
                         .WithMany()

@@ -1,0 +1,10 @@
+@model ThongTinNhayCamViewModel
+@{ ViewData["Title"] = "Thông tin nhạy cảm"; }
+<h1 class="h3">Thông tin nhạy cảm - @Model.HoTen</h1>
+<form asp-action="NhayCam" method="post" class="col-lg-7">
+    <input asp-for="NhanSuId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3"><label asp-for="GiaDinh" class="form-label">Thông tin gia đình</label><textarea asp-for="GiaDinh" class="form-control" rows="4"></textarea></div>
+    <div class="mb-3"><label asp-for="SucKhoe" class="form-label">Tình trạng sức khỏe</label><textarea asp-for="SucKhoe" class="form-control" rows="4"></textarea></div>
+    @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) { <button class="btn btn-primary" type="submit">Lưu</button> }
+</form>

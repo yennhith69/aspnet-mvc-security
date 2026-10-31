@@ -25,7 +25,7 @@
 <div class="table-responsive">
     <table class="table table-sm align-middle">
         <thead>
-            <tr><th>Trình độ</th><th>Chuyên ngành</th><th>Đơn vị cấp</th><th>Minh chứng</th><th>Ghi chú</th></tr>
+            <tr><th>Trình độ</th><th>Chuyên ngành</th><th>Đơn vị cấp</th><th>Minh chứng</th><th>Ghi chú</th><th></th></tr>
         </thead>
         <tbody>
             @foreach (var t in Model.Items)
@@ -46,11 +46,21 @@
                         }
                     </td>
                     <td>@t.MoTa</td>
+                    <td>
+                        @if (Model.CoQuyenSua)
+                        {
+                            <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                            <form asp-action="Delete" method="post">
+                                <input type="hidden" name="id" value="@t.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
+                        }
+                    </td>
                 </tr>
             }
             @if (!Model.Items.Any())
             {
-                <tr><td colspan="5" class="text-center text-muted">Chưa có trình độ nào.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">Chưa có trình độ nào.</td></tr>
             }
         </tbody>
     </table>

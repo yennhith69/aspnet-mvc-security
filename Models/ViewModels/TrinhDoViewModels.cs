@@ -55,3 +55,9 @@ public class TrinhDoCreateViewModel
 
     public IFormFile? Tep { get; set; }
 }
+
+public class TrinhDoEditViewModel : TrinhDoCreateViewModel
+{
+    public int Id { get; set; }
+    public string? TepHienTai { get; set; }
+}

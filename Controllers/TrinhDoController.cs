@@ -176,6 +176,77 @@ public class TrinhDoController : Controller
         return RedirectToAction(nameof(Index), new { nhanSuId = vm.NhanSuId });
     }
 
+    [HttpGet]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var item = await _db.TrinhDos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
+        var fileName = item.TepMinhChungId.HasValue
+            ? await _db.TepMinhChungs.Where(x => x.Id == item.TepMinhChungId.Value).Select(x => x.TenGoc).FirstOrDefaultAsync()
+            : null;
+        return View(new TrinhDoEditViewModel
+        {
+            Id = item.Id, NhanSuId = item.NhanSuId, Loai = item.Loai,
+            ChuyenNganh = item.ChuyenNganh, DonViCap = item.DonViCap,
+            TepHienTai = fileName
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> Edit(TrinhDoEditViewModel vm)
+    {
+        var item = await _db.TrinhDos.FirstOrDefaultAsync(x => x.Id == vm.Id);
+        if (item == null || item.NhanSuId != vm.NhanSuId || !await _scope.CanViewAsync(User, vm.NhanSuId))
+            return NotFound();
+        if (!TrinhDoText.Loais.Contains(vm.Loai))
+            ModelState.AddModelError(nameof(vm.Loai), "Loại trình độ không hợp lệ.");
+
+        string? reason = null;
+        if (vm.Tep is { Length: > 0 }) reason = await ValidateFileAsync(vm.Tep);
+        if (reason != null) ModelState.AddModelError(nameof(vm.Tep), reason);
+        if (!ModelState.IsValid) return View(vm);
+
+        var oldFile = item.TepMinhChungId.HasValue
+            ? await _db.TepMinhChungs.FirstOrDefaultAsync(x => x.Id == item.TepMinhChungId.Value)
+            : null;
+        var oldPath = oldFile == null ? null : Path.Combine(_dir, Path.GetFileName(oldFile.TenLuu));
+        string? newPath = null;
+        if (vm.Tep is { Length: > 0 })
+        {
+            var ext = Path.GetExtension(vm.Tep.FileName).ToLowerInvariant();
+            var storedName = Guid.NewGuid().ToString("N") + ext;
+            Directory.CreateDirectory(_dir);
+            newPath = Path.Combine(_dir, storedName);
+            await using var fs = new FileStream(newPath, FileMode.CreateNew, FileAccess.Write);
+            await vm.Tep.CopyToAsync(fs);
+            if (oldFile == null)
+            {
+                oldFile = new TepMinhChung { NhanSuId = vm.NhanSuId };
+                _db.TepMinhChungs.Add(oldFile);
+            }
+            oldFile.TenGoc = SafeName(vm.Tep.FileName);
+            oldFile.TenLuu = storedName;
+            oldFile.KichThuoc = vm.Tep.Length;
+            oldFile.MoTa = string.IsNullOrWhiteSpace(vm.MoTa) ? null : vm.MoTa.Trim();
+            await _db.SaveChangesAsync();
+            item.TepMinhChungId = oldFile.Id;
+        }
+        item.Loai = vm.Loai;
+        item.ChuyenNganh = vm.ChuyenNganh.Trim();
+        item.DonViCap = vm.DonViCap.Trim();
+        await _db.SaveChangesAsync();
+        if (newPath != null && oldPath != null && oldPath != newPath)
+        {
+            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+        }
+        TempData["Success"] = "Đã cập nhật trình độ.";
+        return RedirectToAction(nameof(Index), new { nhanSuId = vm.NhanSuId });
+    }
+
     // Tải tệp kiểm tra quyền sở hữu và gán Header chống MIME Sniffing (Mục 13, 18, 30)
     [HttpGet]
     public async Task<IActionResult> Download(int id)
@@ -193,6 +264,42 @@ public class TrinhDoController : Controller
         _logger.LogInformation("{User} tải tệp minh chứng {Id}", User.Identity?.Name, id);
         Response.Headers["X-Content-Type-Options"] = "nosniff";
         return PhysicalFile(path, info.Mime, f.TenGoc);
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var item = await _db.TrinhDos.FirstOrDefaultAsync(x => x.Id == id);
+        if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
+
+        var file = item.TepMinhChungId.HasValue
+            ? await _db.TepMinhChungs.FirstOrDefaultAsync(x => x.Id == item.TepMinhChungId.Value)
+            : null;
+        _db.TrinhDos.Remove(item);
+        if (file != null) _db.TepMinhChungs.Remove(file);
+        await _db.SaveChangesAsync();
+
+        if (file != null)
+        {
+            var storedName = Path.GetFileName(file.TenLuu);
+            var path = Path.Combine(_dir, storedName);
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            UserId = _userManager.GetUserId(User),
+            UserName = User.Identity?.Name ?? "",
+            HanhDong = "XoaTrinhDo",
+            DoiTuong = "NhanSu",
+            DoiTuongId = item.NhanSuId.ToString(),
+            ChiTiet = file == null ? "Xóa trình độ" : "Xóa trình độ và tệp minh chứng",
+            Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
+        });
+        await _db.SaveChangesAsync();
+        return RedirectToAction(nameof(Index), new { nhanSuId = item.NhanSuId });
     }
 
     private async Task<string?> ValidateFileAsync(IFormFile f)

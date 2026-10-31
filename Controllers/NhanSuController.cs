@@ -132,7 +132,7 @@ public class NhanSuController : Controller
         var coXemGiayTo = (await _auth.AuthorizeAsync(User, Permissions.GiayToXem)).Succeeded;
         var giayTos = await _db.GiayToDinhDanhs.AsNoTracking()
             .Where(x => x.NhanSuId == ns.Id)
-            .Select(x => new GiayToView { Loai = x.Loai, So = x.So })
+            .Select(x => new GiayToView { Id = x.Id, Loai = x.Loai, So = x.So, NgayCap = x.NgayCap, NoiCap = x.NoiCap })
             .ToListAsync();
 
         if (!coXemGiayTo)
@@ -155,6 +155,44 @@ public class NhanSuController : Controller
             CoQuyenSua = (await _auth.AuthorizeAsync(User, Permissions.HoSoSua)).Succeeded,
             CoQuyenXacNhan = (await _auth.AuthorizeAsync(User, Permissions.HoSoXacNhan)).Succeeded
         });
+    }
+
+    [HttpGet]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    public async Task<IActionResult> EditGiayTo(int id)
+    {
+        var item = await _db.GiayToDinhDanhs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (item == null) return NotFound();
+        if (!await (await ScopedAsync()).AnyAsync(x => x.Id == item.NhanSuId)) return NotFound();
+        var name = await _db.NhanSus.Where(x => x.Id == item.NhanSuId).Select(x => x.HoTen).FirstAsync();
+        return View(new GiayToEditViewModel
+        {
+            Id = item.Id, NhanSuId = item.NhanSuId, HoTen = name, Loai = item.Loai,
+            So = item.So, NgayCap = item.NgayCap, NoiCap = item.NoiCap
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditGiayTo(GiayToEditViewModel vm)
+    {
+        var item = await _db.GiayToDinhDanhs.FirstOrDefaultAsync(x => x.Id == vm.Id);
+        if (item == null || item.NhanSuId != vm.NhanSuId ||
+            !await (await ScopedAsync()).AnyAsync(x => x.Id == vm.NhanSuId)) return NotFound();
+        var so = vm.So.Trim().ToUpperInvariant();
+        if (!NhanSuText.LoaiGiayTos.Contains(vm.Loai))
+            ModelState.AddModelError(nameof(vm.Loai), "Loại giấy tờ không hợp lệ.");
+        if (await _db.GiayToDinhDanhs.AnyAsync(x => x.Id != vm.Id && x.Loai == vm.Loai && x.So == so))
+            ModelState.AddModelError(nameof(vm.So), "Số giấy tờ này đã có trong hệ thống.");
+        if (!ModelState.IsValid) return View(vm);
+        item.Loai = vm.Loai;
+        item.So = so;
+        item.NgayCap = vm.NgayCap;
+        item.NoiCap = string.IsNullOrWhiteSpace(vm.NoiCap) ? null : vm.NoiCap.Trim();
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Đã cập nhật giấy tờ định danh.";
+        return RedirectToAction(nameof(Details), new { id = vm.NhanSuId });
     }
 
     // ---------- Tiếp nhận hồ sơ (F1) ----------
