@@ -44,7 +44,7 @@ public class TrinhDoController : Controller
         _maxBytes = config.GetValue<long>("FileStorage:MaxFileSizeBytes", 5 * 1024 * 1024);
     }
 
-    [HttpGet]
+    [HttpGet("TrinhDo/Index/{nhanSuId:int}")]
     public async Task<IActionResult> Index(int nhanSuId)
     {
         var ns = await (await _scope.ScopedAsync(User)).FirstOrDefaultAsync(x => x.Id == nhanSuId);

@@ -1,37 +1,31 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 
-<ul class="navbar-nav">
+<nav class="sidebar-nav" aria-label="Điều hướng chính">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="NhanSu" asp-action="Index">Hồ sơ nhân sự</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="HopDong" asp-action="SapHetHan">Hợp đồng sắp hết hạn</a>
-        </li>
+        <span class="sidebar-section">Điều hướng</span>
+        <a class="sidebar-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class="sidebar-link" asp-controller="Home" asp-action="Privacy">Giới thiệu</a>
+        <a class="sidebar-link" asp-controller="NhanSu" asp-action="Index">Hồ sơ nhân sự</a>
+        <a class="sidebar-link" asp-controller="HopDong" asp-action="SapHetHan">Hợp đồng sắp hết hạn</a>
         @if (User.IsInRole("Administrator"))
         {
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-controller="AdminUsers" asp-action="Index">Tài khoản</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-controller="AdminUsers" asp-action="LoginLogs">Nhật ký đăng nhập</a>
-            </li>
+            <span class="sidebar-section">Quản trị</span>
+            <a class="sidebar-link" asp-controller="AdminUsers" asp-action="Index">Tài khoản</a>
+            <a class="sidebar-link" asp-controller="AdminUsers" asp-action="LoginLogs">Nhật ký đăng nhập</a>
         }
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Account" asp-action="ChangePassword">@User.Identity!.Name</a>
-        </li>
-        <li class="nav-item">
-            <form asp-controller="Account" asp-action="Logout" method="post">
-                <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
-            </form>
-        </li>
+        <span class="sidebar-section">Tài khoản</span>
+        <a class="sidebar-link" asp-controller="Account" asp-action="ChangePassword">@User.Identity!.Name</a>
+        <form asp-controller="Account" asp-action="Logout" method="post" class="sidebar-logout">
+            <button type="submit" class="sidebar-link sidebar-button">Đăng xuất</button>
+        </form>
     }
     else
     {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Đăng nhập</a>
-        </li>
+        <span class="sidebar-section">Bắt đầu</span>
+        <a class="sidebar-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class="sidebar-link" asp-controller="Home" asp-action="Privacy">Giới thiệu</a>
+        <a class="sidebar-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
     }
-</ul>
+</nav>
