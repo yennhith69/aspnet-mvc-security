@@ -1,0 +1,22 @@
+@model PublicProfileViewModel
+@{
+    ViewData["Title"] = "Lý lịch khoa học";
+}
+<h1 class="h3">Lý lịch khoa học</h1>
+<dl class="row">
+    <dt class="col-sm-3">Mã HRM</dt><dd class="col-sm-9">@Model.MaHrm</dd>
+    <dt class="col-sm-3">Họ tên</dt><dd class="col-sm-9">@Model.HoTen</dd>
+    <dt class="col-sm-3">Đơn vị</dt><dd class="col-sm-9">@Model.DonVi</dd>
+    <dt class="col-sm-3">Chức vụ</dt><dd class="col-sm-9">@Model.ChucVu</dd>
+</dl>
+<h2 class="h5">Trình độ đào tạo</h2>
+<table class="table">
+    <thead><tr><th>Loại</th><th>Chuyên ngành</th><th>Đơn vị cấp</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.TrinhDos)
+    {
+        <tr><td>@item.Loai</td><td>@item.ChuyenNganh</td><td>@item.DonViCap</td></tr>
+    }
+    @if (!Model.TrinhDos.Any()) { <tr><td colspan="3">Chưa công bố thông tin trình độ.</td></tr> }
+    </tbody>
+</table>

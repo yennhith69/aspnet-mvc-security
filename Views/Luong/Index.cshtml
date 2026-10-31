@@ -1,0 +1,25 @@
+@model LuongReportViewModel
+@{
+    ViewData["Title"] = "Báo cáo nâng lương";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3">Báo cáo nâng lương cán bộ</h1>
+    <a class="btn btn-outline-secondary" asp-controller="NhanSu" asp-action="Index">Danh sách hồ sơ</a>
+</div>
+<div class="alert alert-info">Mức lương được che mờ theo quyền truy cập. Chỉ Administrator và Manager được xem số thực.</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead><tr><th>Mã HRM</th><th>Họ tên</th><th>Đơn vị</th><th>Bậc</th><th>Mức lương</th><th>Ngày hiệu lực</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.MaHrm</td><td>@item.HoTen</td><td>@item.DonVi</td><td>@item.Bac</td>
+                <td>@item.MucLuongHienThi</td><td>@item.NgayHieuLuc.ToString("dd/MM/yyyy")</td>
+                <td>@if (Model.CanManage) { <a asp-action="Create" asp-route-nhanSuId="@item.NhanSuId">Thêm</a> }</td>
+            </tr>
+        }
+        @if (!Model.Items.Any()) { <tr><td colspan="7" class="text-center">Chưa có dữ liệu.</td></tr> }
+        </tbody>
+    </table>
+</div>

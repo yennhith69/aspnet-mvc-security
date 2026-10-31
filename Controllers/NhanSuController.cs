@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -12,17 +13,20 @@ public class NhanSuController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IAuthorizationService _auth;
     private readonly ILogger<NhanSuController> _logger;
+    private readonly IMemoryCache _cache;
 
     public NhanSuController(
         ApplicationDbContext db,
         UserManager<ApplicationUser> userManager,
         IAuthorizationService auth,
-        ILogger<NhanSuController> logger)
+        ILogger<NhanSuController> logger,
+        IMemoryCache cache)
     {
         _db = db;
         _userManager = userManager;
         _auth = auth;
         _logger = logger;
+        _cache = cache;
     }
 
     // ---------- Danh sách, tìm kiếm, phân trang (Mục 9, 10, 18, 19) ----------
@@ -105,7 +109,11 @@ public class NhanSuController : Controller
         var vm = new NhanSuIndexViewModel
         {
             Items = items,
-            DonVis = await _db.DonVis.AsNoTracking().OrderBy(x => x.Ten).ToListAsync(),
+            DonVis = await _cache.GetOrCreateAsync("donvi-list", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return await _db.DonVis.AsNoTracking().OrderBy(x => x.Ten).ToListAsync();
+            }) ?? new List<DonVi>(),
             Q = q,
             DonViId = donViId,
             TinhTrang = tinhTrang,
@@ -404,7 +412,11 @@ public class NhanSuController : Controller
 
     private async Task LoadListsAsync()
     {
-        ViewBag.DonVis = await _db.DonVis.AsNoTracking().OrderBy(x => x.Ten).ToListAsync();
+        ViewBag.DonVis = await _cache.GetOrCreateAsync("donvi-list", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+            return await _db.DonVis.AsNoTracking().OrderBy(x => x.Ten).ToListAsync();
+        }) ?? new List<DonVi>();
         ViewBag.ChucVus = await _db.ChucVus.AsNoTracking().OrderBy(x => x.Ten).ToListAsync();
     }
 

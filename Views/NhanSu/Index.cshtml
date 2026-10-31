@@ -87,6 +87,10 @@
                                 <td><span class="badge bg-secondary">@item.TrangThaiHoSo</span></td>
                                 <td class="text-end">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Xem</a>
+                                    @if (item.CongKhai)
+                                    {
+                                        <a asp-controller="Home" asp-action="PublicProfile" asp-route-id="@item.Id" class="btn btn-sm btn-outline-success">Công khai</a>
+                                    }
                                     @if (Model.CoQuyenSua)
                                     {
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>

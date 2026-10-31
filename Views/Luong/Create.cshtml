@@ -1,0 +1,17 @@
+@model LuongCreateViewModel
+@{
+    ViewData["Title"] = "Thêm nâng lương";
+}
+<h1 class="h3">Thêm quá trình nâng lương</h1>
+<form asp-action="Create" method="post" class="col-md-6">
+    <input asp-for="NhanSuId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3"><label asp-for="Bac" class="form-label"></label><input asp-for="Bac" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="MucLuong" class="form-label"></label><input asp-for="MucLuong" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="NgayHieuLuc" class="form-label"></label><input asp-for="NgayHieuLuc" class="form-control" /></div>
+    <button class="btn btn-primary" type="submit">Lưu</button>
+    <a asp-action="Index" class="btn btn-link">Hủy</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
