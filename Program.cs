@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. DbContext kết nối SQL Server có gắn Interceptor Session_Context (Mục 3, 4)
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddScoped<SessionContextInterceptor>();
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
@@ -152,7 +153,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
+app.UseMiddleware<DatabaseUnavailableMiddleware>();   // mục 24: lỗi kết nối DB trả trang 503 gọn
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -163,6 +164,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets().AllowAnonymous();
+app.MapHealthChecks("/health").AllowAnonymous();      // mục 24: kiểm tra DB sẵn sàng
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
