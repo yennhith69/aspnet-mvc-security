@@ -481,3 +481,9 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 App_Data/
+
+*.bak
+*.trn
+*.pvk
+*.cer
+*.sqlaudit
