@@ -153,7 +153,12 @@ public class NhanSuController : Controller
             ChucVuTen = chucVu,
             GiayTos = giayTos,
             CoQuyenSua = (await _auth.AuthorizeAsync(User, Permissions.HoSoSua)).Succeeded,
-            CoQuyenXacNhan = (await _auth.AuthorizeAsync(User, Permissions.HoSoXacNhan)).Succeeded
+            CoQuyenXacNhan = (await _auth.AuthorizeAsync(User, Permissions.HoSoXacNhan)).Succeeded,
+            LichSuThayDoi = await _db.AuditLogs.AsNoTracking()
+                .Where(x => x.DoiTuong == "NhanSu" && x.DoiTuongId == id.ToString())
+                .OrderByDescending(x => x.ThoiGian)
+                .Take(50)
+                .ToListAsync()
         });
     }
 
@@ -311,7 +316,12 @@ public class NhanSuController : Controller
             DonViId = ns.DonViId,
             ChucVuId = ns.ChucVuId,
             TinhTrangCongTac = ns.TinhTrangCongTac,
-            CongKhai = ns.CongKhai
+            CongKhai = ns.CongKhai,
+            CongKhaiHoTen = ns.CongKhaiHoTen,
+            CongKhaiDonVi = ns.CongKhaiDonVi,
+            CongKhaiChucVu = ns.CongKhaiChucVu,
+            CongKhaiTrinhDo = ns.CongKhaiTrinhDo,
+            CongKhaiNckh = ns.CongKhaiNckh
         });
     }
 
@@ -359,6 +369,11 @@ public class NhanSuController : Controller
         Track("ChucVuId", ns.ChucVuId, vm.ChucVuId);
         Track("TinhTrangCongTac", ns.TinhTrangCongTac, vm.TinhTrangCongTac);
         Track("CongKhai", ns.CongKhai, vm.CongKhai);
+        Track("CongKhaiHoTen", ns.CongKhaiHoTen, vm.CongKhaiHoTen);
+        Track("CongKhaiDonVi", ns.CongKhaiDonVi, vm.CongKhaiDonVi);
+        Track("CongKhaiChucVu", ns.CongKhaiChucVu, vm.CongKhaiChucVu);
+        Track("CongKhaiTrinhDo", ns.CongKhaiTrinhDo, vm.CongKhaiTrinhDo);
+        Track("CongKhaiNckh", ns.CongKhaiNckh, vm.CongKhaiNckh);
 
         ns.HoTen = hoTen;
         ns.NgaySinh = vm.NgaySinh!.Value;
@@ -370,6 +385,11 @@ public class NhanSuController : Controller
         ns.ChucVuId = vm.ChucVuId;
         ns.TinhTrangCongTac = vm.TinhTrangCongTac;
         ns.CongKhai = vm.CongKhai;
+        ns.CongKhaiHoTen = vm.CongKhaiHoTen;
+        ns.CongKhaiDonVi = vm.CongKhaiDonVi;
+        ns.CongKhaiChucVu = vm.CongKhaiChucVu;
+        ns.CongKhaiTrinhDo = vm.CongKhaiTrinhDo;
+        ns.CongKhaiNckh = vm.CongKhaiNckh;
         await _db.SaveChangesAsync();
 
         await WriteAuditAsync("SuaHoSo", ns.Id, changes.Count == 0 ? "Không đổi" : "Trường đổi: " + string.Join(", ", changes));

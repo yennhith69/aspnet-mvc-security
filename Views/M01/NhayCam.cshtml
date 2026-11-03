@@ -8,9 +8,17 @@
 <form asp-action="NhayCam" method="post" class="col-lg-7">
     <input asp-for="NhanSuId" type="hidden" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="mb-3"><label asp-for="GiaDinh" class="form-label">Thông tin gia đình</label><textarea asp-for="GiaDinh" class="form-control" rows="4"></textarea></div>
-    <div class="mb-3"><label asp-for="SucKhoe" class="form-label">Tình trạng sức khỏe</label><textarea asp-for="SucKhoe" class="form-control" rows="4"></textarea></div>
-    @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) { <button class="btn btn-primary" type="submit">Lưu</button> }
+    <div class="mb-3">
+        <label asp-for="GiaDinh" class="form-label">Thông tin gia đình (ghi chú tổng quát)</label>
+        <textarea asp-for="GiaDinh" class="form-control" rows="4" placeholder="Ví dụ: hoàn cảnh gia đình, thông tin cần lưu ý..."></textarea>
+        <div class="form-text">Dữ liệu thuộc mục gia đình; thành viên cụ thể được nhập riêng bên dưới.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SucKhoe" class="form-label">Tình trạng sức khỏe hiện tại</label>
+        <textarea asp-for="SucKhoe" class="form-control" rows="4" placeholder="Ví dụ: tình trạng hiện tại, lưu ý sức khỏe..."></textarea>
+        <div class="form-text">Dữ liệu thuộc mục sức khỏe hiện tại; lịch sử theo ngày được nhập ở phần bên dưới.</div>
+    </div>
+    @if (User.IsInRole(Roles.Hr)) { <button class="btn btn-primary" type="submit">Lưu thông tin hiện tại</button> }
 </form>
 
 <section class="mt-5">
@@ -24,7 +32,7 @@
                 <tr>
                     <td>@item.HoTen</td><td>@item.QuanHe</td><td>@(item.NamSinh?.ToString() ?? "—")</td><td>@(item.NgheNghiep ?? "—")</td>
                     <td>
-                        @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+                        @if (User.IsInRole(Roles.Hr))
                         {
                             <form asp-action="XoaThanhVienGiaDinh" method="post">
                                 <input type="hidden" name="id" value="@item.Id" />
@@ -43,15 +51,38 @@
     </div>
 </section>
 
-@if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+<section class="mt-5">
+    <h2 class="h5">Lịch sử sức khỏe</h2>
+    <table class="table">
+        <thead><tr><th>Ngày</th><th>Tình trạng</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.LichSuSucKhoes)
+        {
+            <tr><td>@item.NgayGhiNhan.ToString("dd/MM/yyyy")</td><td>@item.TinhTrang</td><td>@(item.GhiChu ?? "—")</td></tr>
+        }
+        @if (!Model.LichSuSucKhoes.Any()) { <tr><td colspan="3" class="text-muted">Chưa có lịch sử.</td></tr> }
+        </tbody>
+    </table>
+</section>
+@if (User.IsInRole(Roles.Hr))
+{
+    <form asp-action="ThemLichSuSucKhoe" method="post" class="row g-2 col-lg-9 mt-3">
+        <input asp-for="NhanSuId" type="hidden" />
+        <div class="col-md-3"><label asp-for="SucKhoeNgayGhiNhan" class="form-label">Ngày ghi nhận sức khỏe</label><input asp-for="SucKhoeNgayGhiNhan" class="form-control" /><span asp-validation-for="SucKhoeNgayGhiNhan" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="SucKhoeLichSu" class="form-label">Tình trạng sức khỏe</label><input asp-for="SucKhoeLichSu" class="form-control" placeholder="Nhập tình trạng sức khỏe" /><span asp-validation-for="SucKhoeLichSu" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="SucKhoeGhiChu" class="form-label">Ghi chú sức khỏe</label><input asp-for="SucKhoeGhiChu" class="form-control" placeholder="Thông tin bổ sung (nếu có)" /><span asp-validation-for="SucKhoeGhiChu" class="text-danger"></span></div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Thêm lịch sử</button></div>
+    </form>
+}
+@if (User.IsInRole(Roles.Hr))
 {
     <form asp-action="ThemThanhVienGiaDinh" method="post" class="row g-2 col-lg-10 mt-3">
         <input asp-for="NhanSuId" type="hidden" />
-        <div class="col-md-3"><label asp-for="ThanhVienHoTen" class="form-label">Họ tên</label><input asp-for="ThanhVienHoTen" class="form-control" /><span asp-validation-for="ThanhVienHoTen" class="text-danger"></span></div>
-        <div class="col-md-2"><label asp-for="ThanhVienQuanHe" class="form-label">Quan hệ</label><input asp-for="ThanhVienQuanHe" class="form-control" /><span asp-validation-for="ThanhVienQuanHe" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="ThanhVienHoTen" class="form-label">Họ tên thành viên gia đình</label><input asp-for="ThanhVienHoTen" class="form-control" placeholder="Nhập họ tên" /><span asp-validation-for="ThanhVienHoTen" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="ThanhVienQuanHe" class="form-label">Quan hệ gia đình</label><input asp-for="ThanhVienQuanHe" class="form-control" placeholder="Bố, mẹ..." /><span asp-validation-for="ThanhVienQuanHe" class="text-danger"></span></div>
         <div class="col-md-2"><label asp-for="ThanhVienNamSinh" class="form-label">Năm sinh</label><input asp-for="ThanhVienNamSinh" class="form-control" /></div>
-        <div class="col-md-3"><label asp-for="ThanhVienNgheNghiep" class="form-label">Nghề nghiệp</label><input asp-for="ThanhVienNgheNghiep" class="form-control" /></div>
-        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Thêm</button></div>
+        <div class="col-md-3"><label asp-for="ThanhVienNgheNghiep" class="form-label">Nghề nghiệp thành viên</label><input asp-for="ThanhVienNgheNghiep" class="form-control" /></div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Thêm thành viên</button></div>
     </form>
 }
 @section Scripts {

@@ -27,6 +27,11 @@ public class NhanSu
     public string TinhTrangCongTac { get; set; } = "DangCongTac";  // DangCongTac, TapSu, GiangThu, NghiViec
     public string TrangThaiHoSo { get; set; } = "TiepNhan";        // TiepNhan, DaKiemTraTrung, DaCapMa, DaXacNhan
     public bool CongKhai { get; set; }
+    public bool CongKhaiHoTen { get; set; } = true;
+    public bool CongKhaiDonVi { get; set; } = true;
+    public bool CongKhaiChucVu { get; set; } = true;
+    public bool CongKhaiTrinhDo { get; set; } = true;
+    public bool CongKhaiNckh { get; set; } = true;
     public DateTime NgayTao { get; set; } = DateTime.UtcNow;
 }
 
@@ -76,8 +81,28 @@ public class TrinhDo
     public string ChuyenNganh { get; set; } = ""; public string DonViCap { get; set; } = ""; public int? TepMinhChungId { get; set; }
 }
 
+public class ChungChi
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public string Ten { get; set; } = "";
+    public string? DonViCap { get; set; }
+    public DateTime? NgayCap { get; set; }
+    public string? SoHieu { get; set; }
+    public int? TepMinhChungId { get; set; }
+}
+
 public class ThongTinNhayCam   // gia đình, sức khỏe: chỉ HR và chính chủ
 { public int Id { get; set; } public int NhanSuId { get; set; } public string? GiaDinh { get; set; } public string? SucKhoe { get; set; } }
+
+public class LichSuSucKhoe
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public DateTime NgayGhiNhan { get; set; }
+    public string TinhTrang { get; set; } = "";
+    public string? GhiChu { get; set; }
+}
 
 public class ThanhVienGiaDinh
 {

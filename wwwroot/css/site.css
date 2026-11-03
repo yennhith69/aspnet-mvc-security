@@ -32,6 +32,7 @@ a:hover {
 .btn:focus,
 .btn:active:focus,
 .form-control:focus,
+.form-select:focus,
 .form-check-input:focus {
   border-color: #d77f9f;
   box-shadow: 0 0 0 3px rgba(215, 127, 159, .22);
@@ -48,6 +49,74 @@ a:hover {
   color: #fff;
   background: #b85e80;
   border-color: #b85e80;
+}
+
+.employee-filter {
+  padding: 2px;
+}
+
+.employee-filter .form-label {
+  margin-bottom: 6px;
+  color: #4a424c;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.employee-filter .form-control,
+.employee-filter .form-select {
+  min-height: 42px;
+  border: 1px solid #ded7dc;
+  border-radius: 8px;
+  color: #302a33;
+  background-color: #fff;
+  font-size: 14px;
+}
+
+.employee-filter .form-select {
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+.employee-filter-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.employee-filter-actions .btn {
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.employee-filter-actions .btn-primary {
+  min-width: 76px;
+}
+
+.employee-filter-actions .btn-outline-secondary {
+  color: #625965;
+  border-color: #bdb4bc;
+  background: #fff;
+}
+
+.employee-filter-actions .btn-outline-secondary:hover {
+  color: #8f3f60;
+  border-color: #d77f9f;
+  background: #fdf4f7;
+}
+
+@media (max-width: 991.98px) {
+  .employee-filter-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .employee-filter-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .btn-soft {

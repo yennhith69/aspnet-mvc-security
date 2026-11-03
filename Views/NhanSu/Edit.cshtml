@@ -93,6 +93,14 @@
                 <label asp-for="CongKhai" class="form-check-label">Cho phép công khai thông tin trên website (chỉ khi hồ sơ đã xác nhận)</label>
                 <span asp-validation-for="CongKhai" class="text-danger d-block"></span>
             </div>
+            <fieldset class="mt-3">
+                <legend class="h6">Trường dữ liệu được công khai</legend>
+                <div class="form-check"><input asp-for="CongKhaiHoTen" class="form-check-input" /><label asp-for="CongKhaiHoTen" class="form-check-label">Họ tên</label></div>
+                <div class="form-check"><input asp-for="CongKhaiDonVi" class="form-check-input" /><label asp-for="CongKhaiDonVi" class="form-check-label">Đơn vị</label></div>
+                <div class="form-check"><input asp-for="CongKhaiChucVu" class="form-check-input" /><label asp-for="CongKhaiChucVu" class="form-check-label">Chức vụ</label></div>
+                <div class="form-check"><input asp-for="CongKhaiTrinhDo" class="form-check-input" /><label asp-for="CongKhaiTrinhDo" class="form-check-label">Trình độ</label></div>
+                <div class="form-check"><input asp-for="CongKhaiNckh" class="form-check-input" /><label asp-for="CongKhaiNckh" class="form-check-label">Nghiên cứu khoa học</label></div>
+            </fieldset>
 
             <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
             <a class="btn btn-link" asp-action="Details" asp-route-id="@Model.Id">Hủy</a>

@@ -77,8 +77,11 @@ namespace mvcSecurity.Controllers
                       n.TinhTrangCongTac != "NghiViec"
                 select new PublicProfileListItem
                 {
-                    Id = n.Id, MaHrm = n.MaHrm, HoTen = n.HoTen,
-                    DonVi = d.Ten, ChucVu = c == null ? null : c.Ten
+                    Id = n.Id,
+                    MaHrm = n.MaHrm,
+                    HoTen = n.CongKhaiHoTen ? n.HoTen : "Cán bộ đã ẩn tên",
+                    DonVi = n.CongKhaiDonVi ? d.Ten : "Đã ẩn đơn vị",
+                    ChucVu = n.CongKhaiChucVu && c != null ? c.Ten : null
                 };
 
             if (q != null)
@@ -104,20 +107,24 @@ namespace mvcSecurity.Controllers
                       n.TinhTrangCongTac != "NghiViec"
                 select new PublicProfileViewModel
                 {
-                    MaHrm = n.MaHrm, HoTen = n.HoTen, DonVi = d.Ten,
-                    ChucVu = c == null ? null : c.Ten
+                    MaHrm = n.MaHrm,
+                    HoTen = n.CongKhaiHoTen ? n.HoTen : "Cán bộ đã ẩn tên",
+                    DonVi = n.CongKhaiDonVi ? d.Ten : "Đã ẩn đơn vị",
+                    ChucVu = n.CongKhaiChucVu && c != null ? c.Ten : null,
+                    CongKhaiTrinhDo = n.CongKhaiTrinhDo,
+                    CongKhaiNckh = n.CongKhaiNckh
                 }).SingleOrDefaultAsync();
 
             if (profile == null) return NotFound();
-            profile.TrinhDos = await (
+            profile.TrinhDos = profile.CongKhaiTrinhDo ? await (
                 from t in _db.TrinhDos.AsNoTracking()
                 join n in _db.NhanSus.AsNoTracking() on t.NhanSuId equals n.Id
                 where n.Id == id
                 select new PublicEducationRow
                 {
                     Loai = t.Loai, ChuyenNganh = t.ChuyenNganh, DonViCap = t.DonViCap
-                }).ToListAsync();
-            profile.HoatDongNckh = await _db.HoatDongNCKHs.AsNoTracking()
+                }).ToListAsync() : new();
+            profile.HoatDongNckh = profile.CongKhaiNckh ? await _db.HoatDongNCKHs.AsNoTracking()
                 .Where(x => x.NhanSuId == id)
                 .OrderByDescending(x => x.Nam)
                 .ThenBy(x => x.TenHoatDong)
@@ -126,7 +133,7 @@ namespace mvcSecurity.Controllers
                     TenHoatDong = x.TenHoatDong,
                     Nam = x.Nam
                 })
-                .ToListAsync();
+                .ToListAsync() : new();
             return View(profile);
         }
 

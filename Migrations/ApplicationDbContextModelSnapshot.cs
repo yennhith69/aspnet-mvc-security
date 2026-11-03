@@ -155,6 +155,45 @@ namespace mvcSecurity.Migrations
                     b.ToTable("ChucVus");
                 });
 
+            modelBuilder.Entity("ChungChi", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DonViCap")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("NgayCap")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("NhanSuId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SoHieu")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Ten")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("TepMinhChungId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanSuId");
+
+                    b.HasIndex("TepMinhChungId");
+
+                    b.ToTable("ChungChis");
+                });
+
             modelBuilder.Entity("DonVi", b =>
                 {
                     b.Property<int>("Id")
@@ -379,6 +418,36 @@ namespace mvcSecurity.Migrations
                     b.ToTable("LichSuMatKhaus");
                 });
 
+            modelBuilder.Entity("LichSuSucKhoe", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("NgayGhiNhan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("NhanSuId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TinhTrang")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("LichSuSucKhoes");
+                });
+
             modelBuilder.Entity("LoginLog", b =>
                 {
                     b.Property<long>("Id")
@@ -585,6 +654,21 @@ namespace mvcSecurity.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("CongKhai")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CongKhaiChucVu")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CongKhaiDonVi")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CongKhaiHoTen")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CongKhaiNckh")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CongKhaiTrinhDo")
                         .HasColumnType("bit");
 
                     b.Property<string>("DiaChiCuTru")
@@ -854,6 +938,20 @@ namespace mvcSecurity.Migrations
                     b.ToTable("VaiTroQuyens");
                 });
 
+            modelBuilder.Entity("ChungChi", b =>
+                {
+                    b.HasOne("NhanSu", null)
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TepMinhChung", null)
+                        .WithMany()
+                        .HasForeignKey("TepMinhChungId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("GiayToDinhDanh", b =>
                 {
                     b.HasOne("NhanSu", null)
@@ -900,6 +998,15 @@ namespace mvcSecurity.Migrations
                 });
 
             modelBuilder.Entity("KyLuat", b =>
+                {
+                    b.HasOne("NhanSu", null)
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("LichSuSucKhoe", b =>
                 {
                     b.HasOne("NhanSu", null)
                         .WithMany()

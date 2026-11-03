@@ -22,12 +22,12 @@
 <!-- Form tìm kiếm an toàn (Mục 9 & Mục 10: Tham số hóa truy vấn chống SQL Injection) -->
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-end">
-            <div class="col-md-4">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end employee-filter">
+            <div class="col-lg-4">
                 <label class="form-label">Từ khóa (Mã hoặc Họ tên):</label>
                 <input type="text" name="q" class="form-control" placeholder="Nhập tên hoặc mã..." value="@Model.Q" />
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3">
                 <label class="form-label">Đơn vị / Khoa:</label>
                 <select name="donViId" class="form-select">
                     <option value="">-- Tất cả đơn vị --</option>
@@ -44,7 +44,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-5 d-flex gap-2">
+            <div class="col-lg-5 employee-filter-actions">
                 <select name="tinhTrang" class="form-select">
                     <option value="">-- Tình trạng công tác --</option>
                     @foreach (var value in NhanSuText.TinhTrangs)
@@ -60,7 +60,7 @@
                     }
                 </select>
                 <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
             </div>
         </form>
     </div>

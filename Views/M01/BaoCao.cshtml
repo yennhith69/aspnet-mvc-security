@@ -6,10 +6,12 @@
 }
 <h1 class="h3 mb-4">Báo cáo tổng hợp M01</h1>
 <div class="d-flex gap-2 mb-4 no-print">
-    <button type="button" class="btn btn-primary" data-print-report>In báo cáo</button>
+    <button type="button" class="btn btn-outline-secondary" data-print-report>In trang báo cáo</button>
     @if ((await AuthorizationService.AuthorizeAsync(User, Permissions.BaoCaoIn)).Succeeded)
     {
         <a class="btn btn-outline-secondary" asp-action="XuatBaoCaoCsv">Xuất CSV</a>
+        <a class="btn btn-outline-secondary" asp-action="XuatBaoCaoExcel">Xuất Excel</a>
+        <a class="btn btn-primary" asp-action="XuatBaoCaoPdf">Tải file PDF</a>
     }
 </div>
 <div class="row g-3">

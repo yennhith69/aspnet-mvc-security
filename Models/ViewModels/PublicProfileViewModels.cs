@@ -1,9 +1,11 @@
 public class PublicProfileViewModel
 {
     public string MaHrm { get; set; } = "";
-    public string HoTen { get; set; } = "";
-    public string DonVi { get; set; } = "";
+    public string? HoTen { get; set; }
+    public string? DonVi { get; set; }
     public string? ChucVu { get; set; }
+    public bool CongKhaiTrinhDo { get; set; }
+    public bool CongKhaiNckh { get; set; }
     public List<PublicEducationRow> TrinhDos { get; set; } = new();
     public List<PublicResearchRow> HoatDongNckh { get; set; } = new();
 }

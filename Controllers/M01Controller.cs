@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using ClosedXML.Excel;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 [Authorize(Policy = Permissions.HoSoXem)]
 public class M01Controller : Controller
@@ -68,6 +72,78 @@ public class M01Controller : Controller
     }
 
     [HttpGet]
+    [Authorize(Policy = Permissions.BaoCaoIn)]
+    public async Task<IActionResult> XuatBaoCaoExcel()
+    {
+        var report = await BuildReportAsync();
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("Bao cao nhan su");
+        sheet.Cell(1, 1).Value = "BÁO CÁO TỔNG HỢP NHÂN SỰ";
+        sheet.Range(1, 1, 1, 2).Merge();
+        sheet.Cell(1, 1).Style.Font.Bold = true;
+        sheet.Cell(1, 1).Style.Font.FontSize = 16;
+        sheet.Cell(3, 1).Value = "Chỉ tiêu";
+        sheet.Cell(3, 2).Value = "Giá trị";
+        sheet.Range(3, 1, 3, 2).Style.Font.Bold = true;
+        var rows = new[]
+        {
+            ("Tổng nhân sự", report.TongNhanSu.ToString()),
+            ("Hồ sơ đã xác nhận", report.HoSoDaXacNhan.ToString()),
+            ("Hợp đồng sắp hết hạn trong 60 ngày", report.HopDongSapHetHan.ToString()),
+            ("Hoạt động nghiên cứu khoa học", report.HoatDongNckh.ToString()),
+            ("Tổng giờ giảng", report.TongGioGiang.ToString("0.##"))
+        };
+        for (var i = 0; i < rows.Length; i++)
+        {
+            sheet.Cell(i + 4, 1).Value = rows[i].Item1;
+            sheet.Cell(i + 4, 2).Value = rows[i].Item2;
+        }
+        sheet.Columns().AdjustToContents();
+        sheet.Column(1).Width = Math.Max(sheet.Column(1).Width, 36);
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return File(stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"bao-cao-nhan-su-{DateTime.Today:yyyyMMdd}.xlsx");
+    }
+
+    [HttpGet]
+    [Authorize(Policy = Permissions.BaoCaoIn)]
+    public async Task<IActionResult> XuatBaoCaoPdf()
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+        var report = await BuildReportAsync();
+        var pdf = Document.Create(document =>
+        {
+            document.Page(page =>
+            {
+                page.Margin(35);
+                page.Header().Text("BÁO CÁO TỔNG HỢP NHÂN SỰ").Bold().FontSize(18);
+                page.Content().PaddingTop(20).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(3);
+                        columns.RelativeColumn(1);
+                    });
+                    table.Header(header =>
+                    {
+                        header.Cell().Element(CellStyle).Text("Chỉ tiêu").Bold();
+                        header.Cell().Element(CellStyle).Text("Giá trị").Bold();
+                    });
+                    AddPdfRow(table, "Tổng nhân sự", report.TongNhanSu.ToString());
+                    AddPdfRow(table, "Hồ sơ đã xác nhận", report.HoSoDaXacNhan.ToString());
+                    AddPdfRow(table, "Hợp đồng sắp hết hạn trong 60 ngày", report.HopDongSapHetHan.ToString());
+                    AddPdfRow(table, "Hoạt động nghiên cứu khoa học", report.HoatDongNckh.ToString());
+                    AddPdfRow(table, "Tổng giờ giảng", report.TongGioGiang.ToString("0.##"));
+                });
+                page.Footer().AlignCenter().Text($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            });
+        }).GeneratePdf();
+        return File(pdf, "application/pdf", $"bao-cao-nhan-su-{DateTime.Today:yyyyMMdd}.pdf");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> NhayCam(int nhanSuId)
     {
         if (!await CanViewSensitiveAsync(nhanSuId)) return NotFound();
@@ -83,6 +159,10 @@ public class M01Controller : Controller
             ThanhVienGiaDinhs = await _db.ThanhVienGiaDinhs.AsNoTracking()
                 .Where(x => x.NhanSuId == nhanSuId)
                 .OrderBy(x => x.HoTen)
+                .ToListAsync(),
+            LichSuSucKhoes = await _db.LichSuSucKhoes.AsNoTracking()
+                .Where(x => x.NhanSuId == nhanSuId)
+                .OrderByDescending(x => x.NgayGhiNhan)
                 .ToListAsync()
         });
     }
@@ -102,6 +182,49 @@ public class M01Controller : Controller
         item.GiaDinh = vm.GiaDinh?.Trim();
         item.SucKhoe = vm.SucKhoe?.Trim();
         await _db.SaveChangesAsync();
+        _db.AuditLogs.Add(new AuditLog
+        {
+            UserId = _users.GetUserId(User),
+            UserName = User.Identity?.Name ?? "",
+            HanhDong = "SuaThongTinNhayCam",
+            DoiTuong = "NhanSu",
+            DoiTuongId = vm.NhanSuId.ToString(),
+            ChiTiet = "Cập nhật gia đình và sức khỏe",
+            Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
+        });
+        await _db.SaveChangesAsync();
+        return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ThemLichSuSucKhoe(ThongTinNhayCamViewModel vm)
+    {
+        if (!await CanViewSensitiveAsync(vm.NhanSuId)) return NotFound();
+        if (string.IsNullOrWhiteSpace(vm.SucKhoeLichSu))
+            ModelState.AddModelError(nameof(vm.SucKhoeLichSu), "Vui lòng nhập tình trạng sức khỏe.");
+        if (!vm.SucKhoeNgayGhiNhan.HasValue)
+            ModelState.AddModelError(nameof(vm.SucKhoeNgayGhiNhan), "Vui lòng nhập ngày ghi nhận.");
+        if (!ModelState.IsValid)
+        {
+            var current = await _db.ThongTinNhayCams.AsNoTracking().FirstOrDefaultAsync(x => x.NhanSuId == vm.NhanSuId);
+            vm.GiaDinh = current?.GiaDinh;
+            vm.SucKhoe = current?.SucKhoe;
+            vm.HoTen = await _db.NhanSus.Where(x => x.Id == vm.NhanSuId).Select(x => x.HoTen).FirstOrDefaultAsync() ?? "";
+            vm.ThanhVienGiaDinhs = await _db.ThanhVienGiaDinhs.AsNoTracking().Where(x => x.NhanSuId == vm.NhanSuId).ToListAsync();
+            vm.LichSuSucKhoes = await _db.LichSuSucKhoes.AsNoTracking().Where(x => x.NhanSuId == vm.NhanSuId).OrderByDescending(x => x.NgayGhiNhan).ToListAsync();
+            return View("NhayCam", vm);
+        }
+        _db.LichSuSucKhoes.Add(new LichSuSucKhoe
+        {
+            NhanSuId = vm.NhanSuId,
+            NgayGhiNhan = vm.SucKhoeNgayGhiNhan!.Value,
+            TinhTrang = vm.SucKhoeLichSu!.Trim(),
+            GhiChu = string.IsNullOrWhiteSpace(vm.SucKhoeGhiChu) ? null : vm.SucKhoeGhiChu.Trim()
+        });
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Đã thêm lịch sử sức khỏe.";
         return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -436,6 +559,32 @@ public class M01Controller : Controller
 
     private static string CsvEscape(string value) =>
         $"\"{value.Replace("\"", "\"\"")}\"";
+
+    private async Task<M01ReportViewModel> BuildReportAsync()
+    {
+        var scoped = await _scope.ScopedAsync(User);
+        var ids = scoped.Select(x => x.Id);
+        var today = DateTime.Today;
+        return new M01ReportViewModel
+        {
+            TongNhanSu = await scoped.CountAsync(),
+            HoSoDaXacNhan = await scoped.CountAsync(x => x.TrangThaiHoSo == "DaXacNhan"),
+            HopDongSapHetHan = await _db.HopDongs.CountAsync(x => ids.Contains(x.NhanSuId) &&
+                x.TrangThai == "HieuLuc" && x.DenNgay >= today && x.DenNgay <= today.AddDays(60)),
+            HoatDongNckh = await _db.HoatDongNCKHs.CountAsync(x => ids.Contains(x.NhanSuId)),
+            TongGioGiang = await _db.GioGiangs.Where(x => ids.Contains(x.NhanSuId))
+                .Select(x => (decimal?)x.SoGio).SumAsync() ?? 0
+        };
+    }
+
+    private static void AddPdfRow(TableDescriptor table, string label, string value)
+    {
+        table.Cell().Element(CellStyle).Text(label);
+        table.Cell().Element(CellStyle).Text(value);
+    }
+
+    private static IContainer CellStyle(IContainer container) =>
+        container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingVertical(7);
 
     private async Task PopulateNckhViewModelAsync(NckhViewModel vm)
     {

@@ -7,11 +7,16 @@
     <dt class="col-sm-3">Đơn vị</dt><dd class="col-sm-9">@Model.DonVi</dd>
     <dt class="col-sm-3">Chức vụ</dt><dd class="col-sm-9">@Model.ChucVu</dd>
 </dl>
+@if (Model.CongKhaiTrinhDo)
+{
 <h2 class="h5 mt-4">Trình độ đào tạo</h2>
 <table class="table"><thead><tr><th>Loại</th><th>Chuyên ngành</th><th>Đơn vị cấp</th></tr></thead><tbody>
 @foreach (var item in Model.TrinhDos) { <tr><td>@item.Loai</td><td>@item.ChuyenNganh</td><td>@item.DonViCap</td></tr> }
 @if (!Model.TrinhDos.Any()) { <tr><td colspan="3">Chưa công bố thông tin trình độ.</td></tr> }
 </tbody></table>
+}
+@if (Model.CongKhaiNckh)
+{
 <h2 class="h5 mt-4">Hoạt động nghiên cứu khoa học</h2>
 <table class="table">
     <thead><tr><th>Năm</th><th>Tên hoạt động</th></tr></thead>
@@ -26,3 +31,4 @@
     }
     </tbody>
 </table>
+}

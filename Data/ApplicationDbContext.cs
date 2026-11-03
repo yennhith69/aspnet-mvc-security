@@ -13,7 +13,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HopDong> HopDongs => Set<HopDong>();
     public DbSet<TepMinhChung> TepMinhChungs => Set<TepMinhChung>();
     public DbSet<TrinhDo> TrinhDos => Set<TrinhDo>();
+    public DbSet<ChungChi> ChungChis => Set<ChungChi>();
     public DbSet<ThongTinNhayCam> ThongTinNhayCams => Set<ThongTinNhayCam>();
+    public DbSet<LichSuSucKhoe> LichSuSucKhoes => Set<LichSuSucKhoe>();
     public DbSet<ThanhVienGiaDinh> ThanhVienGiaDinhs => Set<ThanhVienGiaDinh>();
     public DbSet<NangLuong> NangLuongs => Set<NangLuong>();
     public DbSet<KhenThuong> KhenThuongs => Set<KhenThuong>();
@@ -62,7 +64,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         b.Entity<TepMinhChung>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<TrinhDo>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<TrinhDo>().HasOne<TepMinhChung>().WithMany().HasForeignKey(x => x.TepMinhChungId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<ChungChi>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<ChungChi>().HasOne<TepMinhChung>().WithMany().HasForeignKey(x => x.TepMinhChungId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<ThongTinNhayCam>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<LichSuSucKhoe>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<ChungChi>().Property(x => x.Ten).HasMaxLength(200);
+        b.Entity<ChungChi>().Property(x => x.DonViCap).HasMaxLength(200);
+        b.Entity<ChungChi>().Property(x => x.SoHieu).HasMaxLength(100);
+        b.Entity<LichSuSucKhoe>().Property(x => x.TinhTrang).HasMaxLength(500);
+        b.Entity<LichSuSucKhoe>().Property(x => x.GhiChu).HasMaxLength(1000);
         b.Entity<ThanhVienGiaDinh>().HasOne<NhanSu>().WithMany().HasForeignKey(x => x.NhanSuId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<ThanhVienGiaDinh>().Property(x => x.HoTen).HasMaxLength(200);
         b.Entity<ThanhVienGiaDinh>().Property(x => x.QuanHe).HasMaxLength(100);

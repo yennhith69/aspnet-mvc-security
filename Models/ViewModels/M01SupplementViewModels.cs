@@ -11,6 +11,10 @@ public class ThongTinNhayCamViewModel
     [StringLength(100)] public string? ThanhVienQuanHe { get; set; }
     [Range(1900, 2100)] public int? ThanhVienNamSinh { get; set; }
     [StringLength(200)] public string? ThanhVienNgheNghiep { get; set; }
+    public List<LichSuSucKhoe> LichSuSucKhoes { get; set; } = new();
+    [StringLength(500)] public string? SucKhoeLichSu { get; set; }
+    [StringLength(1000)] public string? SucKhoeGhiChu { get; set; }
+    [DataType(DataType.Date)] public DateTime? SucKhoeNgayGhiNhan { get; set; }
 }
 
 public class NangLuongViewModel
