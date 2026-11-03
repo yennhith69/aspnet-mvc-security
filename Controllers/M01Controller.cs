@@ -76,7 +76,14 @@ public class M01Controller : Controller
         var item = await _db.ThongTinNhayCams.AsNoTracking().FirstOrDefaultAsync(x => x.NhanSuId == nhanSuId);
         return View(new ThongTinNhayCamViewModel
         {
-            NhanSuId = nhanSuId, HoTen = ns.HoTen, GiaDinh = item?.GiaDinh, SucKhoe = item?.SucKhoe
+            NhanSuId = nhanSuId,
+            HoTen = ns.HoTen,
+            GiaDinh = item?.GiaDinh,
+            SucKhoe = item?.SucKhoe,
+            ThanhVienGiaDinhs = await _db.ThanhVienGiaDinhs.AsNoTracking()
+                .Where(x => x.NhanSuId == nhanSuId)
+                .OrderBy(x => x.HoTen)
+                .ToListAsync()
         });
     }
 
@@ -96,6 +103,56 @@ public class M01Controller : Controller
         item.SucKhoe = vm.SucKhoe?.Trim();
         await _db.SaveChangesAsync();
         return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ThemThanhVienGiaDinh(ThongTinNhayCamViewModel vm)
+    {
+        if (!await CanViewSensitiveAsync(vm.NhanSuId)) return NotFound();
+        if (string.IsNullOrWhiteSpace(vm.ThanhVienHoTen))
+            ModelState.AddModelError(nameof(vm.ThanhVienHoTen), "Vui lòng nhập họ tên thành viên.");
+        if (string.IsNullOrWhiteSpace(vm.ThanhVienQuanHe))
+            ModelState.AddModelError(nameof(vm.ThanhVienQuanHe), "Vui lòng nhập quan hệ.");
+        if (!ModelState.IsValid)
+        {
+            var ns = await _db.NhanSus.AsNoTracking().FirstOrDefaultAsync(x => x.Id == vm.NhanSuId);
+            if (ns == null) return NotFound();
+            vm.HoTen = ns.HoTen;
+            vm.ThanhVienGiaDinhs = await _db.ThanhVienGiaDinhs.AsNoTracking()
+                .Where(x => x.NhanSuId == vm.NhanSuId)
+                .OrderBy(x => x.HoTen)
+                .ToListAsync();
+            return View("NhayCam", vm);
+        }
+
+        _db.ThanhVienGiaDinhs.Add(new ThanhVienGiaDinh
+        {
+            NhanSuId = vm.NhanSuId,
+            HoTen = vm.ThanhVienHoTen!.Trim(),
+            QuanHe = vm.ThanhVienQuanHe!.Trim(),
+            NamSinh = vm.ThanhVienNamSinh,
+            NgheNghiep = string.IsNullOrWhiteSpace(vm.ThanhVienNgheNghiep)
+                ? null
+                : vm.ThanhVienNgheNghiep.Trim()
+        });
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Đã thêm thành viên gia đình.";
+        return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> XoaThanhVienGiaDinh(int id)
+    {
+        var item = await _db.ThanhVienGiaDinhs.FindAsync(id);
+        if (item == null || !await CanViewSensitiveAsync(item.NhanSuId)) return NotFound();
+        _db.ThanhVienGiaDinhs.Remove(item);
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Đã xóa thành viên gia đình.";
+        return RedirectToAction(nameof(NhayCam), new { nhanSuId = item.NhanSuId });
     }
 
     [HttpGet]

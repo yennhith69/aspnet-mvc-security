@@ -738,6 +738,41 @@ namespace mvcSecurity.Migrations
                     b.ToTable("TepMinhChungs");
                 });
 
+            modelBuilder.Entity("ThanhVienGiaDinh", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("HoTen")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("NamSinh")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NgheNghiep")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("NhanSuId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QuanHe")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NhanSuId");
+
+                    b.ToTable("ThanhVienGiaDinhs");
+                });
+
             modelBuilder.Entity("ThongTinNhayCam", b =>
                 {
                     b.Property<int>("Id")
@@ -970,6 +1005,15 @@ namespace mvcSecurity.Migrations
                 });
 
             modelBuilder.Entity("TepMinhChung", b =>
+                {
+                    b.HasOne("NhanSu", null)
+                        .WithMany()
+                        .HasForeignKey("NhanSuId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ThanhVienGiaDinh", b =>
                 {
                     b.HasOne("NhanSu", null)
                         .WithMany()

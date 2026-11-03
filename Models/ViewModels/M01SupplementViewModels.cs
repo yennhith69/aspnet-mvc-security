@@ -6,6 +6,11 @@ public class ThongTinNhayCamViewModel
     public string HoTen { get; set; } = "";
     public string? GiaDinh { get; set; }
     public string? SucKhoe { get; set; }
+    public List<ThanhVienGiaDinh> ThanhVienGiaDinhs { get; set; } = new();
+    [StringLength(200)] public string? ThanhVienHoTen { get; set; }
+    [StringLength(100)] public string? ThanhVienQuanHe { get; set; }
+    [Range(1900, 2100)] public int? ThanhVienNamSinh { get; set; }
+    [StringLength(200)] public string? ThanhVienNgheNghiep { get; set; }
 }
 
 public class NangLuongViewModel

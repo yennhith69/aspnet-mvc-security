@@ -1,6 +1,10 @@
 @model ThongTinNhayCamViewModel
 @{ ViewData["Title"] = "Thông tin nhạy cảm"; }
 <h1 class="h3">Thông tin nhạy cảm - @Model.HoTen</h1>
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
 <form asp-action="NhayCam" method="post" class="col-lg-7">
     <input asp-for="NhanSuId" type="hidden" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -8,3 +12,48 @@
     <div class="mb-3"><label asp-for="SucKhoe" class="form-label">Tình trạng sức khỏe</label><textarea asp-for="SucKhoe" class="form-control" rows="4"></textarea></div>
     @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) { <button class="btn btn-primary" type="submit">Lưu</button> }
 </form>
+
+<section class="mt-5">
+    <h2 class="h5">Thành viên gia đình</h2>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Họ tên</th><th>Quan hệ</th><th>Năm sinh</th><th>Nghề nghiệp</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.ThanhVienGiaDinhs)
+            {
+                <tr>
+                    <td>@item.HoTen</td><td>@item.QuanHe</td><td>@(item.NamSinh?.ToString() ?? "—")</td><td>@(item.NgheNghiep ?? "—")</td>
+                    <td>
+                        @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+                        {
+                            <form asp-action="XoaThanhVienGiaDinh" method="post">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.ThanhVienGiaDinhs.Any())
+            {
+                <tr><td colspan="5" class="text-muted">Chưa có thành viên gia đình.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+{
+    <form asp-action="ThemThanhVienGiaDinh" method="post" class="row g-2 col-lg-10 mt-3">
+        <input asp-for="NhanSuId" type="hidden" />
+        <div class="col-md-3"><label asp-for="ThanhVienHoTen" class="form-label">Họ tên</label><input asp-for="ThanhVienHoTen" class="form-control" /><span asp-validation-for="ThanhVienHoTen" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="ThanhVienQuanHe" class="form-label">Quan hệ</label><input asp-for="ThanhVienQuanHe" class="form-control" /><span asp-validation-for="ThanhVienQuanHe" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="ThanhVienNamSinh" class="form-label">Năm sinh</label><input asp-for="ThanhVienNamSinh" class="form-control" /></div>
+        <div class="col-md-3"><label asp-for="ThanhVienNgheNghiep" class="form-label">Nghề nghiệp</label><input asp-for="ThanhVienNgheNghiep" class="form-control" /></div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Thêm</button></div>
+    </form>
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

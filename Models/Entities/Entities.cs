@@ -79,6 +79,16 @@ public class TrinhDo
 public class ThongTinNhayCam   // gia đình, sức khỏe: chỉ HR và chính chủ
 { public int Id { get; set; } public int NhanSuId { get; set; } public string? GiaDinh { get; set; } public string? SucKhoe { get; set; } }
 
+public class ThanhVienGiaDinh
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public string HoTen { get; set; } = "";
+    public string QuanHe { get; set; } = "";
+    public int? NamSinh { get; set; }
+    public string? NgheNghiep { get; set; }
+}
+
 public class NangLuong
 {
     public int Id { get; set; }
