@@ -32,6 +32,7 @@ public class HopDongIndexViewModel
 
 public class HopDongCreateViewModel
 {
+    public int? Id { get; set; }
     public int NhanSuId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn loại hợp đồng.")]
@@ -83,6 +84,7 @@ public class CongTacIndexViewModel
 
 public class CongTacCreateViewModel
 {
+    public int? Id { get; set; }
     public int NhanSuId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn đơn vị.")]

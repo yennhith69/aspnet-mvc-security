@@ -143,6 +143,52 @@ public class HopDongController : Controller
         return RedirectToAction(nameof(Index), new { nhanSuId = vm.NhanSuId });
     }
 
+    [HttpGet]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var hd = await _db.HopDongs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (hd == null || !await _scope.CanViewAsync(User, hd.NhanSuId)) return NotFound();
+        return View(new HopDongCreateViewModel
+        {
+            Id = hd.Id, NhanSuId = hd.NhanSuId, Loai = hd.Loai,
+            TuNgay = hd.TuNgay, DenNgay = hd.DenNgay
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(HopDongCreateViewModel vm)
+    {
+        var hd = await _db.HopDongs.FirstOrDefaultAsync(x => x.Id == vm.Id);
+        if (hd == null || hd.NhanSuId != vm.NhanSuId ||
+            !await _scope.CanViewAsync(User, vm.NhanSuId)) return NotFound();
+
+        ValidateContract(vm);
+        if (ModelState.IsValid)
+        {
+            var end = vm.Loai == "KhongXacDinhThoiHan" ? null : vm.DenNgay;
+            var start = vm.TuNgay!.Value;
+            var newEnd = end ?? DateTime.MaxValue;
+            var overlap = await _db.HopDongs.AnyAsync(x =>
+                x.Id != vm.Id && x.NhanSuId == vm.NhanSuId && x.TrangThai != "ChamDut" &&
+                x.TuNgay <= newEnd && (x.DenNgay == null || x.DenNgay >= start));
+            if (overlap)
+                ModelState.AddModelError("", "Thời gian này trùng với một hợp đồng đang hiệu lực.");
+        }
+
+        if (!ModelState.IsValid) return View(vm);
+
+        hd.Loai = vm.Loai;
+        hd.TuNgay = vm.TuNgay!.Value;
+        hd.DenNgay = vm.Loai == "KhongXacDinhThoiHan" ? null : vm.DenNgay;
+        await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaHopDong", hd.NhanSuId, $"HopDong {hd.Id}");
+        TempData["Success"] = "Đã cập nhật hợp đồng.";
+        return RedirectToAction(nameof(Index), new { nhanSuId = hd.NhanSuId });
+    }
+
     // ---------- Chấm dứt hợp đồng (không xóa) ----------
 
     [HttpPost]
@@ -181,5 +227,23 @@ public class HopDongController : Controller
             Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
         });
         await _db.SaveChangesAsync();
+    }
+
+    private void ValidateContract(HopDongCreateViewModel vm)
+    {
+        if (!HopDongText.Loais.Contains(vm.Loai))
+            ModelState.AddModelError(nameof(vm.Loai), "Loại hợp đồng không hợp lệ.");
+        if (!vm.TuNgay.HasValue)
+            return;
+        if (vm.TuNgay.Value.Year < 1990 || vm.TuNgay.Value > DateTime.Today.AddYears(1))
+            ModelState.AddModelError(nameof(vm.TuNgay), "Ngày bắt đầu không hợp lệ.");
+        if (vm.Loai == "KhongXacDinhThoiHan")
+            return;
+        if (!vm.DenNgay.HasValue)
+            ModelState.AddModelError(nameof(vm.DenNgay), "Loại hợp đồng này bắt buộc có ngày kết thúc.");
+        else if (vm.DenNgay.Value < vm.TuNgay.Value)
+            ModelState.AddModelError(nameof(vm.DenNgay), "Ngày kết thúc phải sau ngày bắt đầu.");
+        else if (vm.DenNgay.Value > vm.TuNgay.Value.AddYears(10))
+            ModelState.AddModelError(nameof(vm.DenNgay), "Thời hạn hợp đồng không được quá 10 năm.");
     }
 }

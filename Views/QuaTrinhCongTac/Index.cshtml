@@ -38,6 +38,10 @@
                     <td>@c.TuNgay.ToString("dd/MM/yyyy")</td>
                     <td>@(c.DenNgay.HasValue ? c.DenNgay.Value.ToString("dd/MM/yyyy") : "Hiện tại")</td>
                     <td>
+                        @if (Model.CoQuyenSua)
+                        {
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@c.Id">Sửa</a>
+                        }
                         @if (Model.CoQuyenSua && !c.DenNgay.HasValue)
                         {
                             <form asp-action="Close" asp-route-id="@c.Id" method="post" class="d-inline">

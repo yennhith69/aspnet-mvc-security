@@ -22,12 +22,12 @@
 <!-- Form tìm kiếm an toàn (Mục 9 & Mục 10: Tham số hóa truy vấn chống SQL Injection) -->
 <div class="card mb-3">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-2 align-items-end">
-            <div class="col-md-4">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end employee-filter">
+            <div class="col-lg-4">
                 <label class="form-label">Từ khóa (Mã hoặc Họ tên):</label>
                 <input type="text" name="q" class="form-control" placeholder="Nhập tên hoặc mã..." value="@Model.Q" />
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3">
                 <label class="form-label">Đơn vị / Khoa:</label>
                 <select name="donViId" class="form-select">
                     <option value="">-- Tất cả đơn vị --</option>
@@ -44,9 +44,23 @@
                     }
                 </select>
             </div>
-            <div class="col-md-5 d-flex gap-2">
+            <div class="col-lg-5 employee-filter-actions">
+                <select name="tinhTrang" class="form-select">
+                    <option value="">-- Tình trạng công tác --</option>
+                    @foreach (var value in NhanSuText.TinhTrangs)
+                    {
+                        <option value="@value" selected="@(Model.TinhTrang == value)">@NhanSuText.TinhTrang(value)</option>
+                    }
+                </select>
+                <select name="trangThai" class="form-select">
+                    <option value="">-- Trạng thái hồ sơ --</option>
+                    @foreach (var value in NhanSuText.TrangThais)
+                    {
+                        <option value="@value" selected="@(Model.TrangThai == value)">@NhanSuText.TrangThai(value)</option>
+                    }
+                </select>
                 <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">Xóa lọc</a>
             </div>
         </form>
     </div>
@@ -83,8 +97,8 @@
                                 <td><strong>@item.MaHrm</strong></td>
                                 <td>@item.HoTen</td>
                                 <td>@item.DonVi</td>
-                                <td><span class="badge bg-info text-dark">@item.TinhTrangCongTac</span></td>
-                                <td><span class="badge bg-secondary">@item.TrangThaiHoSo</span></td>
+                                <td><span class="badge bg-info text-dark">@NhanSuText.TinhTrang(item.TinhTrangCongTac)</span></td>
+                                <td><span class="badge bg-secondary">@NhanSuText.TrangThai(item.TrangThaiHoSo)</span></td>
                                 <td class="text-end">
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Xem</a>
                                     @if (Model.CoQuyenSua)
@@ -107,7 +121,7 @@
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     <li class="page-item @(i == Model.PageNumber ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId">@i</a>
+                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-q="@Model.Q" asp-route-donViId="@Model.DonViId" asp-route-tinhTrang="@Model.TinhTrang" asp-route-trangThai="@Model.TrangThai" asp-route-sort="@Model.Sort" asp-route-dir="@Model.Dir">@i</a>
                     </li>
                 }
             </ul>

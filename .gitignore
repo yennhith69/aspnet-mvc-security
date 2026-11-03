@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Copilot session-local files
+.commandcode/
+
 # User-specific files
 *.rsuser
 *.suo

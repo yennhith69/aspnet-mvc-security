@@ -1,8 +1,111 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeDashboardViewModel
+@{
+    ViewData["Title"] = "Tổng quan nhân sự";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (!Model.IsAuthenticated)
+{
+    <section class="public-intro">
+        <p class="intro-label">NEU-SecHRM</p>
+        <h1>Quản lý hồ sơ cán bộ, giảng viên</h1>
+        <p class="intro-copy">Hệ thống hỗ trợ tiếp nhận, cập nhật, tra cứu và bảo vệ hồ sơ nhân sự trong môi trường đại học.</p>
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Đăng nhập hệ thống</a>
+    </section>
+}
+else
+{
+    <header class="content-heading">
+        <div>
+            <h1>Tổng quan nhân sự</h1>
+            <p>Theo dõi tình trạng hồ sơ và các công việc cần xử lý trong phạm vi được phân quyền.</p>
+        </div>
+        <a class="btn btn-primary" asp-controller="NhanSu" asp-action="Index">Tra cứu hồ sơ</a>
+    </header>
+
+    <section class="summary-strip" aria-label="Tóm tắt dữ liệu nhân sự">
+        <div class="summary-item">
+            <span>Hồ sơ nhân sự</span>
+            <strong>@Model.EmployeeCount</strong>
+            <small>Trong phạm vi quản lý</small>
+        </div>
+        <div class="summary-item">
+            <span>Hợp đồng sắp hết hạn</span>
+            <strong>@Model.ExpiringContractCount</strong>
+            <small>Trong 60 ngày tới</small>
+        </div>
+        <div class="summary-item">
+            <span>Hồ sơ đã xác nhận</span>
+            <strong>@Model.ConfirmedProfileCount</strong>
+            <small>Sẵn sàng tra cứu</small>
+        </div>
+        <div class="summary-item">
+            <span>Minh chứng hồ sơ</span>
+            <strong>@Model.EvidenceCount</strong>
+            <small>Tệp đã lưu an toàn</small>
+        </div>
+    </section>
+
+    <div class="home-content-grid">
+        <section class="content-panel employee-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Hồ sơ cập nhật gần đây</h2>
+                    <p>Danh sách hồ sơ mới nhất trong phạm vi dữ liệu của bạn.</p>
+                </div>
+                <a class="text-link" asp-controller="NhanSu" asp-action="Index">Xem danh sách</a>
+            </div>
+            @if (Model.RecentEmployees.Count == 0)
+            {
+                <p class="empty-state">Chưa có hồ sơ trong phạm vi dữ liệu của bạn.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="employee-table">
+                        <thead>
+                            <tr>
+                                <th>Mã hồ sơ</th>
+                                <th>Họ và tên</th>
+                                <th>Đơn vị</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var employee in Model.RecentEmployees)
+                            {
+                                <tr>
+                                    <td>@employee.EmployeeCode</td>
+                                    <td class="employee-name">@employee.FullName</td>
+                                    <td>@employee.UnitName</td>
+                                    <td><span class="status-label">@employee.ProfileStatus</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <aside class="home-side-column">
+            <section class="content-panel quick-links-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Truy cập nhanh</h2>
+                        <p>Các chức năng thường dùng.</p>
+                    </div>
+                </div>
+                <nav class="quick-links" aria-label="Truy cập nhanh">
+                    <a asp-controller="NhanSu" asp-action="Index">Danh sách hồ sơ <span>→</span></a>
+                    <a asp-controller="HopDong" asp-action="SapHetHan">Hợp đồng sắp hết hạn <span>→</span></a>
+                    <a asp-controller="M01" asp-action="BaoCao">Báo cáo <span>→</span></a>
+                </nav>
+            </section>
+
+            <section class="content-panel security-summary">
+                <h2>Bảo mật dữ liệu</h2>
+                <p>Quyền truy cập được áp dụng theo vai trò và phạm vi hồ sơ. Các thao tác quan trọng được ghi nhận để phục vụ kiểm tra.</p>
+                <a class="text-link" asp-controller="M01" asp-action="BaoCao">Xem báo cáo hệ thống</a>
+            </section>
+        </aside>
+    </div>
+}

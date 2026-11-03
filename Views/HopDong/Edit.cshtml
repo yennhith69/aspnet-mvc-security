@@ -1,0 +1,27 @@
+@model HopDongCreateViewModel
+@{
+    ViewData["Title"] = "Sửa hợp đồng";
+}
+<h1 class="h3 mb-3">Sửa hợp đồng</h1>
+<form asp-action="Edit" method="post" class="col-lg-7">
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="NhanSuId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="mb-3">
+        <label asp-for="Loai" class="form-label">Loại hợp đồng</label>
+        <select asp-for="Loai" class="form-select">
+            @foreach (var loai in HopDongText.Loais)
+            {
+                <option value="@loai">@HopDongText.Loai(loai)</option>
+            }
+        </select>
+        <span asp-validation-for="Loai" class="text-danger"></span>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="TuNgay" class="form-label">Từ ngày</label><input asp-for="TuNgay" class="form-control" /><span asp-validation-for="TuNgay" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="DenNgay" class="form-label">Đến ngày</label><input asp-for="DenNgay" class="form-control" /><span asp-validation-for="DenNgay" class="text-danger"></span></div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Lưu thay đổi</button>
+    <a class="btn btn-link mt-3" asp-action="Index" asp-route-nhanSuId="@Model.NhanSuId">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

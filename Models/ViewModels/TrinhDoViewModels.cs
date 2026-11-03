@@ -55,3 +55,20 @@ public class TrinhDoCreateViewModel
 
     public IFormFile? Tep { get; set; }
 }
+
+public class TrinhDoEditViewModel : TrinhDoCreateViewModel
+{
+    public int Id { get; set; }
+    public string? TepHienTai { get; set; }
+}
+
+public class ChungChiViewModel
+{
+    public int NhanSuId { get; set; }
+    public string HoTen { get; set; } = "";
+    public List<ChungChi> Items { get; set; } = new();
+    [Required, StringLength(200)] public string Ten { get; set; } = "";
+    [StringLength(200)] public string? DonViCap { get; set; }
+    [DataType(DataType.Date)] public DateTime? NgayCap { get; set; }
+    [StringLength(100)] public string? SoHieu { get; set; }
+}

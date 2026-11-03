@@ -1,0 +1,17 @@
+@model GiayToEditViewModel
+@{
+    ViewData["Title"] = "Sửa giấy tờ định danh";
+}
+<h1 class="h3 mb-3">Giấy tờ định danh - @Model.HoTen</h1>
+<form asp-action="EditGiayTo" method="post" class="col-lg-7">
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="NhanSuId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3"><label asp-for="Loai" class="form-label">Loại giấy tờ</label><select asp-for="Loai" class="form-select">@foreach (var value in NhanSuText.LoaiGiayTos) { <option value="@value">@value</option> }</select></div>
+    <div class="mb-3"><label asp-for="So" class="form-label">Số giấy tờ</label><input asp-for="So" class="form-control" /><span asp-validation-for="So" class="text-danger"></span></div>
+    <div class="mb-3"><label asp-for="NgayCap" class="form-label">Ngày cấp</label><input asp-for="NgayCap" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="NoiCap" class="form-label">Nơi cấp</label><input asp-for="NoiCap" class="form-control" /></div>
+    <button class="btn btn-primary" type="submit">Lưu</button>
+    <a class="btn btn-link" asp-controller="NhanSu" asp-action="Details" asp-route-id="@Model.NhanSuId">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

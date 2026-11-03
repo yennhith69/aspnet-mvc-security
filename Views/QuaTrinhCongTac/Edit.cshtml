@@ -1,0 +1,28 @@
+@model CongTacCreateViewModel
+@{
+    ViewData["Title"] = "Sửa quá trình công tác";
+    var donVis = ViewBag.DonVis as List<DonVi> ?? new();
+    var chucVus = ViewBag.ChucVus as List<ChucVu> ?? new();
+}
+<h1 class="h3 mb-3">Sửa quá trình công tác</h1>
+<form asp-action="Edit" method="post" class="col-lg-7">
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="NhanSuId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="mb-3">
+        <label asp-for="DonViId" class="form-label">Đơn vị</label>
+        <select asp-for="DonViId" class="form-select"><option value="">-- Chọn đơn vị --</option>@foreach (var d in donVis) { <option value="@d.Id">@d.Ten</option> }</select>
+        <span asp-validation-for="DonViId" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="ChucVuId" class="form-label">Chức vụ</label>
+        <select asp-for="ChucVuId" class="form-select"><option value="">-- Không chọn --</option>@foreach (var c in chucVus) { <option value="@c.Id">@c.Ten</option> }</select>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="TuNgay" class="form-label">Từ ngày</label><input asp-for="TuNgay" class="form-control" /><span asp-validation-for="TuNgay" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="DenNgay" class="form-label">Đến ngày</label><input asp-for="DenNgay" class="form-control" /><span asp-validation-for="DenNgay" class="text-danger"></span></div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Lưu thay đổi</button>
+    <a class="btn btn-link mt-3" asp-action="Index" asp-route-nhanSuId="@Model.NhanSuId">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

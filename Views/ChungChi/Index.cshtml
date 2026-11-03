@@ -1,0 +1,40 @@
+@model ChungChiViewModel
+@{
+    ViewData["Title"] = "Chứng chỉ";
+}
+<h1 class="h3">Chứng chỉ - @Model.HoTen</h1>
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<table class="table align-middle">
+    <thead><tr><th>Tên chứng chỉ</th><th>Đơn vị cấp</th><th>Ngày cấp</th><th>Số hiệu</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>@item.Ten</td><td>@(item.DonViCap ?? "—")</td><td>@(item.NgayCap?.ToString("dd/MM/yyyy") ?? "—")</td><td>@(item.SoHieu ?? "—")</td>
+            <td>
+                @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+                {
+                    <form asp-action="Delete" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="btn btn-sm btn-outline-danger">Xóa</button></form>
+                }
+            </td>
+        </tr>
+    }
+    @if (!Model.Items.Any()) { <tr><td colspan="5" class="text-muted">Chưa có chứng chỉ.</td></tr> }
+    </tbody>
+</table>
+@if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin))
+{
+    <form asp-action="Create" method="post" class="row g-2">
+        <input asp-for="NhanSuId" type="hidden" />
+        <div class="col-md-3"><label asp-for="Ten" class="form-label">Tên chứng chỉ</label><input asp-for="Ten" class="form-control" /></div>
+        <div class="col-md-3"><label asp-for="DonViCap" class="form-label">Đơn vị cấp</label><input asp-for="DonViCap" class="form-control" /></div>
+        <div class="col-md-2"><label asp-for="NgayCap" class="form-label">Ngày cấp</label><input asp-for="NgayCap" class="form-control" /></div>
+        <div class="col-md-2"><label asp-for="SoHieu" class="form-label">Số hiệu</label><input asp-for="SoHieu" class="form-control" /></div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100">Thêm</button></div>
+    </form>
+}
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,27 @@
+@model KhenThuongViewModel
+@{ ViewData["Title"] = "Khen thưởng"; }
+<h1 class="h3">Khen thưởng - @Model.HoTen</h1>
+<table class="table"><thead><tr><th>Loại</th><th>Nội dung</th><th>Ngày</th></tr></thead><tbody>
+@foreach (var x in Model.Items) {
+    <tr>
+        <td>@x.Loai</td><td>@x.NoiDung</td><td>@x.Ngay.ToString("dd/MM/yyyy")</td>
+        <td>
+            @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) {
+                <form asp-action="SuaKhenThuong" method="post" class="d-inline-flex gap-1 align-items-center">
+                    <input type="hidden" name="Id" value="@x.Id" />
+                    <input type="hidden" name="NhanSuId" value="@Model.NhanSuId" />
+                    <input name="Loai" value="@x.Loai" class="form-control form-control-sm" aria-label="Loại" />
+                    <input name="NoiDung" value="@x.NoiDung" class="form-control form-control-sm" aria-label="Nội dung" />
+                    <input name="Ngay" value="@x.Ngay.ToString("yyyy-MM-dd")" class="form-control form-control-sm" type="date" aria-label="Ngày" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Lưu</button>
+                </form>
+                <form asp-action="XoaKhenThuong" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@x.Id" />
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                </form>
+            }
+        </td>
+    </tr>
+}
+</tbody></table>
+@if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) { <form asp-action="KhenThuong" method="post" class="row g-2"><input asp-for="NhanSuId" type="hidden" /><div class="col-md-3"><input asp-for="Loai" class="form-control" placeholder="Loại" /></div><div class="col-md-5"><input asp-for="NoiDung" class="form-control" placeholder="Nội dung" /></div><div class="col-md-3"><input asp-for="Ngay" class="form-control" /></div><div class="col-md-1"><button class="btn btn-primary">Thêm</button></div></form> }

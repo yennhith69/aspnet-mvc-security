@@ -1,0 +1,42 @@
+@model PublicProfileDirectoryViewModel
+@{
+    ViewData["Title"] = "Tra cứu hồ sơ công khai";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="h3 mb-1">Tra cứu hồ sơ công khai</h1>
+        <p class="text-muted mb-0">Danh sách cán bộ đã cho phép công bố thông tin lý lịch khoa học.</p>
+    </div>
+</div>
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-8">
+        <label for="q" class="visually-hidden">Tìm kiếm</label>
+        <input id="q" name="q" value="@Model.Query" class="form-control" maxlength="100" placeholder="Tìm theo mã HRM, họ tên hoặc đơn vị" />
+    </div>
+    <div class="col-auto"><button class="btn btn-primary" type="submit">Tìm kiếm</button></div>
+    @if (!string.IsNullOrWhiteSpace(Model.Query))
+    {
+        <div class="col-auto"><a class="btn btn-outline-secondary" asp-action="PublicDirectory">Xóa lọc</a></div>
+    }
+</form>
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Mã HRM</th><th>Họ tên</th><th>Đơn vị</th><th>Chức vụ</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.MaHrm</td>
+                <td>@item.HoTen</td>
+                <td>@item.DonVi</td>
+                <td>@(item.ChucVu ?? "—")</td>
+                <td><a class="btn btn-sm btn-outline-primary" asp-action="PublicProfile" asp-route-id="@item.Id">Xem hồ sơ</a></td>
+            </tr>
+        }
+        @if (!Model.Items.Any())
+        {
+            <tr><td colspan="5" class="text-center text-muted">Không tìm thấy hồ sơ công khai phù hợp.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

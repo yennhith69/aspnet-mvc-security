@@ -1,0 +1,34 @@
+@model NckhViewModel
+@{ ViewData["Title"] = "Nghiên cứu khoa học"; }
+<h1 class="h3">Hoạt động NCKH - @Model.HoTen</h1>
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success">@success</div>
+}
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<table class="table"><thead><tr><th>Năm</th><th>Tên hoạt động</th><th></th></tr></thead><tbody>
+@foreach (var x in Model.Items) {
+    <tr>
+        <td>@x.Nam</td><td>@x.TenHoatDong</td>
+        <td>
+            @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) {
+                <form asp-action="SuaNckh" method="post" class="d-inline-flex gap-1 align-items-center">
+                    <input type="hidden" name="Id" value="@x.Id" />
+                    <input type="hidden" name="NhanSuId" value="@Model.NhanSuId" />
+                    <input name="Nam" value="@x.Nam" class="form-control form-control-sm" type="number" min="2000" max="2100" aria-label="Năm" />
+                    <input name="TenHoatDong" value="@x.TenHoatDong" class="form-control form-control-sm" aria-label="Tên hoạt động" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Lưu</button>
+                </form>
+                <form asp-action="XoaNckh" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@x.Id" />
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                </form>
+            }
+        </td>
+    </tr>
+}
+</tbody></table>
+@if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) { <form asp-action="Nckh" method="post" class="row g-2 col-lg-8"><input asp-for="NhanSuId" type="hidden" /><div class="col-md-8"><input asp-for="TenHoatDong" class="form-control" placeholder="Tên đề tài/hoạt động" /><span asp-validation-for="TenHoatDong" class="text-danger"></span></div><div class="col-md-2"><input asp-for="Nam" class="form-control" /><span asp-validation-for="Nam" class="text-danger"></span></div><div class="col-md-2"><button type="submit" class="btn btn-primary">Thêm</button></div></form> }
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

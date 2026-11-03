@@ -1,0 +1,34 @@
+@model NangLuongViewModel
+@{ ViewData["Title"] = "Nâng lương"; }
+<h1 class="h3">Quá trình nâng lương - @Model.HoTen</h1>
+<table class="table"><thead><tr><th>Bậc</th><th>Mức lương</th><th>Ngày hiệu lực</th><th></th></tr></thead><tbody>
+@foreach (var x in Model.Items) {
+    <tr>
+        <td>@x.Bac</td>
+        <td>@(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Hr) ? x.MucLuong.ToString("N0") : "******")</td>
+        <td>@x.NgayHieuLuc.ToString("dd/MM/yyyy")</td>
+        <td>
+            @if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) {
+                <form asp-action="SuaNangLuong" method="post" class="d-inline-flex gap-1 align-items-center">
+                    <input type="hidden" name="Id" value="@x.Id" />
+                    <input type="hidden" name="NhanSuId" value="@Model.NhanSuId" />
+                    <input name="Bac" value="@x.Bac" class="form-control form-control-sm" aria-label="Bậc" />
+                    <input name="MucLuong" value="@x.MucLuong" class="form-control form-control-sm" type="number" step="0.01" aria-label="Mức lương" />
+                    <input name="NgayHieuLuc" value="@x.NgayHieuLuc.ToString("yyyy-MM-dd")" class="form-control form-control-sm" type="date" aria-label="Ngày hiệu lực" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Lưu</button>
+                </form>
+                <form asp-action="XoaNangLuong" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@x.Id" />
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                </form>
+            }
+        </td>
+    </tr>
+}
+</tbody></table>
+@if (User.IsInRole(Roles.Hr)) {
+<form asp-action="NangLuong" method="post" class="row g-2 col-lg-8">
+<input asp-for="NhanSuId" type="hidden" /><div class="col-md-4"><label asp-for="Bac"></label><input asp-for="Bac" class="form-control" /></div>
+<div class="col-md-4"><label asp-for="MucLuong"></label><input asp-for="MucLuong" class="form-control" /></div>
+<div class="col-md-4"><label asp-for="NgayHieuLuc"></label><input asp-for="NgayHieuLuc" class="form-control" /></div>
+<div><button class="btn btn-primary" type="submit">Thêm</button></div></form> }

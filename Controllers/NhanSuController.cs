@@ -132,7 +132,7 @@ public class NhanSuController : Controller
         var coXemGiayTo = (await _auth.AuthorizeAsync(User, Permissions.GiayToXem)).Succeeded;
         var giayTos = await _db.GiayToDinhDanhs.AsNoTracking()
             .Where(x => x.NhanSuId == ns.Id)
-            .Select(x => new GiayToView { Loai = x.Loai, So = x.So })
+            .Select(x => new GiayToView { Id = x.Id, Loai = x.Loai, So = x.So, NgayCap = x.NgayCap, NoiCap = x.NoiCap })
             .ToListAsync();
 
         if (!coXemGiayTo)
@@ -153,8 +153,51 @@ public class NhanSuController : Controller
             ChucVuTen = chucVu,
             GiayTos = giayTos,
             CoQuyenSua = (await _auth.AuthorizeAsync(User, Permissions.HoSoSua)).Succeeded,
-            CoQuyenXacNhan = (await _auth.AuthorizeAsync(User, Permissions.HoSoXacNhan)).Succeeded
+            CoQuyenXacNhan = (await _auth.AuthorizeAsync(User, Permissions.HoSoXacNhan)).Succeeded,
+            LichSuThayDoi = await _db.AuditLogs.AsNoTracking()
+                .Where(x => x.DoiTuong == "NhanSu" && x.DoiTuongId == id.ToString())
+                .OrderByDescending(x => x.ThoiGian)
+                .Take(50)
+                .ToListAsync()
         });
+    }
+
+    [HttpGet]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    public async Task<IActionResult> EditGiayTo(int id)
+    {
+        var item = await _db.GiayToDinhDanhs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (item == null) return NotFound();
+        if (!await (await ScopedAsync()).AnyAsync(x => x.Id == item.NhanSuId)) return NotFound();
+        var name = await _db.NhanSus.Where(x => x.Id == item.NhanSuId).Select(x => x.HoTen).FirstAsync();
+        return View(new GiayToEditViewModel
+        {
+            Id = item.Id, NhanSuId = item.NhanSuId, HoTen = name, Loai = item.Loai,
+            So = item.So, NgayCap = item.NgayCap, NoiCap = item.NoiCap
+        });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Permissions.HoSoSua)]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditGiayTo(GiayToEditViewModel vm)
+    {
+        var item = await _db.GiayToDinhDanhs.FirstOrDefaultAsync(x => x.Id == vm.Id);
+        if (item == null || item.NhanSuId != vm.NhanSuId ||
+            !await (await ScopedAsync()).AnyAsync(x => x.Id == vm.NhanSuId)) return NotFound();
+        var so = vm.So.Trim().ToUpperInvariant();
+        if (!NhanSuText.LoaiGiayTos.Contains(vm.Loai))
+            ModelState.AddModelError(nameof(vm.Loai), "Loại giấy tờ không hợp lệ.");
+        if (await _db.GiayToDinhDanhs.AnyAsync(x => x.Id != vm.Id && x.Loai == vm.Loai && x.So == so))
+            ModelState.AddModelError(nameof(vm.So), "Số giấy tờ này đã có trong hệ thống.");
+        if (!ModelState.IsValid) return View(vm);
+        item.Loai = vm.Loai;
+        item.So = so;
+        item.NgayCap = vm.NgayCap;
+        item.NoiCap = string.IsNullOrWhiteSpace(vm.NoiCap) ? null : vm.NoiCap.Trim();
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "Đã cập nhật giấy tờ định danh.";
+        return RedirectToAction(nameof(Details), new { id = vm.NhanSuId });
     }
 
     // ---------- Tiếp nhận hồ sơ (F1) ----------
@@ -273,7 +316,12 @@ public class NhanSuController : Controller
             DonViId = ns.DonViId,
             ChucVuId = ns.ChucVuId,
             TinhTrangCongTac = ns.TinhTrangCongTac,
-            CongKhai = ns.CongKhai
+            CongKhai = ns.CongKhai,
+            CongKhaiHoTen = ns.CongKhaiHoTen,
+            CongKhaiDonVi = ns.CongKhaiDonVi,
+            CongKhaiChucVu = ns.CongKhaiChucVu,
+            CongKhaiTrinhDo = ns.CongKhaiTrinhDo,
+            CongKhaiNckh = ns.CongKhaiNckh
         });
     }
 
@@ -321,6 +369,11 @@ public class NhanSuController : Controller
         Track("ChucVuId", ns.ChucVuId, vm.ChucVuId);
         Track("TinhTrangCongTac", ns.TinhTrangCongTac, vm.TinhTrangCongTac);
         Track("CongKhai", ns.CongKhai, vm.CongKhai);
+        Track("CongKhaiHoTen", ns.CongKhaiHoTen, vm.CongKhaiHoTen);
+        Track("CongKhaiDonVi", ns.CongKhaiDonVi, vm.CongKhaiDonVi);
+        Track("CongKhaiChucVu", ns.CongKhaiChucVu, vm.CongKhaiChucVu);
+        Track("CongKhaiTrinhDo", ns.CongKhaiTrinhDo, vm.CongKhaiTrinhDo);
+        Track("CongKhaiNckh", ns.CongKhaiNckh, vm.CongKhaiNckh);
 
         ns.HoTen = hoTen;
         ns.NgaySinh = vm.NgaySinh!.Value;
@@ -332,6 +385,11 @@ public class NhanSuController : Controller
         ns.ChucVuId = vm.ChucVuId;
         ns.TinhTrangCongTac = vm.TinhTrangCongTac;
         ns.CongKhai = vm.CongKhai;
+        ns.CongKhaiHoTen = vm.CongKhaiHoTen;
+        ns.CongKhaiDonVi = vm.CongKhaiDonVi;
+        ns.CongKhaiChucVu = vm.CongKhaiChucVu;
+        ns.CongKhaiTrinhDo = vm.CongKhaiTrinhDo;
+        ns.CongKhaiNckh = vm.CongKhaiNckh;
         await _db.SaveChangesAsync();
 
         await WriteAuditAsync("SuaHoSo", ns.Id, changes.Count == 0 ? "Không đổi" : "Trường đổi: " + string.Join(", ", changes));

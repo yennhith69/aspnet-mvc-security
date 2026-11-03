@@ -35,6 +35,11 @@ public class NhanSuListItem
     public string TinhTrangCongTac { get; set; } = "";
     public string TrangThaiHoSo { get; set; } = "";
     public bool CongKhai { get; set; }
+    public bool CongKhaiHoTen { get; set; } = true;
+    public bool CongKhaiDonVi { get; set; } = true;
+    public bool CongKhaiChucVu { get; set; } = true;
+    public bool CongKhaiTrinhDo { get; set; } = true;
+    public bool CongKhaiNckh { get; set; } = true;
 }
 
 public class NhanSuIndexViewModel
@@ -127,12 +132,31 @@ public class NhanSuEditViewModel
     public string TinhTrangCongTac { get; set; } = "DangCongTac";
 
     public bool CongKhai { get; set; }
+    public bool CongKhaiHoTen { get; set; } = true;
+    public bool CongKhaiDonVi { get; set; } = true;
+    public bool CongKhaiChucVu { get; set; } = true;
+    public bool CongKhaiTrinhDo { get; set; } = true;
+    public bool CongKhaiNckh { get; set; } = true;
 }
 
 public class GiayToView
 {
+    public int Id { get; set; }
     public string Loai { get; set; } = "";
     public string So { get; set; } = "";
+    public DateTime? NgayCap { get; set; }
+    public string? NoiCap { get; set; }
+}
+
+public class GiayToEditViewModel
+{
+    public int Id { get; set; }
+    public int NhanSuId { get; set; }
+    public string HoTen { get; set; } = "";
+    [Required] public string Loai { get; set; } = "";
+    [Required, StringLength(20)] public string So { get; set; } = "";
+    [DataType(DataType.Date)] public DateTime? NgayCap { get; set; }
+    [StringLength(200)] public string? NoiCap { get; set; }
 }
 
 public class NhanSuDetailsViewModel
@@ -143,4 +167,5 @@ public class NhanSuDetailsViewModel
     public List<GiayToView> GiayTos { get; set; } = new();
     public bool CoQuyenSua { get; set; }
     public bool CoQuyenXacNhan { get; set; }
+    public List<AuditLog> LichSuThayDoi { get; set; } = new();
 }

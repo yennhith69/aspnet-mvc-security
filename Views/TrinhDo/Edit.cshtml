@@ -1,0 +1,19 @@
+@model TrinhDoEditViewModel
+@{
+    ViewData["Title"] = "Sửa trình độ";
+}
+<h1 class="h3 mb-3">Sửa trình độ</h1>
+<form asp-action="Edit" method="post" enctype="multipart/form-data" class="col-lg-7">
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="NhanSuId" type="hidden" />
+    <input asp-for="TepHienTai" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3"><label asp-for="Loai" class="form-label">Loại trình độ</label><select asp-for="Loai" class="form-select">@foreach (var value in TrinhDoText.Loais) { <option value="@value">@TrinhDoText.Loai(value)</option> }</select></div>
+    <div class="mb-3"><label asp-for="ChuyenNganh" class="form-label">Chuyên ngành</label><input asp-for="ChuyenNganh" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="DonViCap" class="form-label">Đơn vị cấp</label><input asp-for="DonViCap" class="form-control" /></div>
+    <div class="mb-3"><label asp-for="Tep" class="form-label">Thay minh chứng</label><input asp-for="Tep" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" /><div class="form-text">Để trống nếu giữ tệp hiện tại: @Model.TepHienTai</div></div>
+    <div class="mb-3"><label asp-for="MoTa" class="form-label">Ghi chú</label><input asp-for="MoTa" class="form-control" /></div>
+    <button class="btn btn-primary" type="submit">Lưu</button>
+    <a class="btn btn-link" asp-action="Index" asp-route-nhanSuId="@Model.NhanSuId">Hủy</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
