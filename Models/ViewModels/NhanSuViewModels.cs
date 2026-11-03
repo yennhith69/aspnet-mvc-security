@@ -58,7 +58,7 @@ public class NhanSuIndexViewModel
     public bool CoQuyenSua { get; set; }
 }
 
-public class NhanSuCreateViewModel
+public class NhanSuCreateViewModel : IValidatableObject
 {
     [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
     [StringLength(200)]
@@ -95,9 +95,15 @@ public class NhanSuCreateViewModel
     public string SoGiayTo { get; set; } = "";
 
     public bool XacNhanKhongTrung { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (NgaySinh.HasValue && (NgaySinh.Value.Date > DateTime.Today.AddYears(-18) || NgaySinh.Value.Year < 1930))
+            yield return new ValidationResult("Ngày sinh không hợp lệ (phải đủ 18 tuổi và không được ở tương lai).", new[] { nameof(NgaySinh) });
+    }
 }
 
-public class NhanSuEditViewModel
+public class NhanSuEditViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
@@ -137,6 +143,12 @@ public class NhanSuEditViewModel
     public bool CongKhaiChucVu { get; set; } = true;
     public bool CongKhaiTrinhDo { get; set; } = true;
     public bool CongKhaiNckh { get; set; } = true;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (NgaySinh.HasValue && (NgaySinh.Value.Date > DateTime.Today.AddYears(-18) || NgaySinh.Value.Year < 1930))
+            yield return new ValidationResult("Ngày sinh không hợp lệ (phải đủ 18 tuổi và không được ở tương lai).", new[] { nameof(NgaySinh) });
+    }
 }
 
 public class GiayToView

@@ -20,7 +20,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="NgaySinh" class="form-label">Ngày sinh</label>
-                    <input asp-for="NgaySinh" class="form-control" type="date" />
+                    <input asp-for="NgaySinh" class="form-control" type="date" max="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" />
                     <span asp-validation-for="NgaySinh" class="text-danger"></span>
                 </div>
                 <div class="col-md-6 mb-3">

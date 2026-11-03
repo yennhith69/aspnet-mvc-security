@@ -215,8 +215,6 @@ public class NhanSuController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(NhanSuCreateViewModel vm)
     {
-        if (vm.NgaySinh.HasValue && (vm.NgaySinh.Value.Year < 1930 || vm.NgaySinh.Value > DateTime.Today.AddYears(-18)))
-            ModelState.AddModelError(nameof(vm.NgaySinh), "Ngày sinh không hợp lệ (phải đủ 18 tuổi).");
         if (!NhanSuText.GioiTinhs.Contains(vm.GioiTinh))
             ModelState.AddModelError(nameof(vm.GioiTinh), "Giới tính không hợp lệ.");
         if (!NhanSuText.LoaiGiayTos.Contains(vm.LoaiGiayTo))
@@ -333,8 +331,6 @@ public class NhanSuController : Controller
         var ns = await _db.NhanSus.FindAsync(vm.Id);
         if (ns == null) return NotFound();
 
-        if (vm.NgaySinh.HasValue && (vm.NgaySinh.Value.Year < 1930 || vm.NgaySinh.Value > DateTime.Today.AddYears(-18)))
-            ModelState.AddModelError(nameof(vm.NgaySinh), "Ngày sinh không hợp lệ (phải đủ 18 tuổi).");
         if (!NhanSuText.GioiTinhs.Contains(vm.GioiTinh))
             ModelState.AddModelError(nameof(vm.GioiTinh), "Giới tính không hợp lệ.");
         if (!NhanSuText.TinhTrangs.Contains(vm.TinhTrangCongTac))
