@@ -243,33 +243,38 @@ public class NhanSuController : Controller
         }
 
         NhanSu? created = null;
+        var strategy = _db.Database.CreateExecutionStrategy();
         for (var attempt = 0; attempt < 3 && created == null; attempt++)
         {
             try
             {
-                await using var tx = await _db.Database.BeginTransactionAsync();
-                var ns = new NhanSu
+                created = await strategy.ExecuteAsync(async () =>
                 {
-                    MaHrm = await NextMaHrmAsync(),
-                    HoTen = hoTen,
-                    NgaySinh = vm.NgaySinh!.Value,
-                    GioiTinh = vm.GioiTinh,
-                    Email = string.IsNullOrWhiteSpace(vm.Email) ? null : vm.Email.Trim(),
-                    DienThoai = string.IsNullOrWhiteSpace(vm.DienThoai) ? null : vm.DienThoai.Trim(),
-                    DiaChiCuTru = string.IsNullOrWhiteSpace(vm.DiaChiCuTru) ? null : vm.DiaChiCuTru.Trim(),
-                    DonViId = vm.DonViId!.Value,
-                    ChucVuId = vm.ChucVuId,
-                    TinhTrangCongTac = "DangCongTac",
-                    TrangThaiHoSo = "DaCapMa",
-                    CongKhai = false
-                };
-                _db.NhanSus.Add(ns);
-                await _db.SaveChangesAsync();
+                    _db.ChangeTracker.Clear();
+                    await using var tx = await _db.Database.BeginTransactionAsync();
+                    var ns = new NhanSu
+                    {
+                        MaHrm = await NextMaHrmAsync(),
+                        HoTen = hoTen,
+                        NgaySinh = vm.NgaySinh!.Value,
+                        GioiTinh = vm.GioiTinh,
+                        Email = string.IsNullOrWhiteSpace(vm.Email) ? null : vm.Email.Trim(),
+                        DienThoai = string.IsNullOrWhiteSpace(vm.DienThoai) ? null : vm.DienThoai.Trim(),
+                        DiaChiCuTru = string.IsNullOrWhiteSpace(vm.DiaChiCuTru) ? null : vm.DiaChiCuTru.Trim(),
+                        DonViId = vm.DonViId!.Value,
+                        ChucVuId = vm.ChucVuId,
+                        TinhTrangCongTac = "DangCongTac",
+                        TrangThaiHoSo = "DaCapMa",
+                        CongKhai = false
+                    };
+                    _db.NhanSus.Add(ns);
+                    await _db.SaveChangesAsync();
 
-                _db.GiayToDinhDanhs.Add(new GiayToDinhDanh { NhanSuId = ns.Id, Loai = vm.LoaiGiayTo, So = so });
-                await _db.SaveChangesAsync();
-                await tx.CommitAsync();
-                created = ns;
+                    _db.GiayToDinhDanhs.Add(new GiayToDinhDanh { NhanSuId = ns.Id, Loai = vm.LoaiGiayTo, So = so });
+                    await _db.SaveChangesAsync();
+                    await tx.CommitAsync();
+                    return ns;
+                });
             }
             catch (DbUpdateException ex)
             {

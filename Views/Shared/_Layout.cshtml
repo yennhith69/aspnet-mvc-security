@@ -9,37 +9,49 @@
     <link rel="stylesheet" href="~/mvcSecurity.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="app-shell">
-        <aside class="app-sidebar">
-            <a class="app-brand" asp-controller="Home" asp-action="Index">
-                <span class="app-brand-mark" aria-hidden="true">N</span>
-                <span>
-                    <strong>NEU-SecHRM</strong>
-                    <small>Hồ sơ cán bộ / giảng viên</small>
-                </span>
-            </a>
-            <partial name="_LoginPartial" />
-            <div class="sidebar-note">
-                <span>Hệ thống quản lý nội bộ</span>
-                <small>Bảo mật theo vai trò và phạm vi hồ sơ</small>
-            </div>
-        </aside>
-        <div class="app-content">
-            <header class="app-topbar">
-                <div>
-                    <span class="page-title">@ViewData["Title"]</span>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="app-shell">
+            <aside class="app-sidebar">
+                <a class="app-brand" asp-controller="Home" asp-action="Index">
+                    <span class="app-brand-mark" aria-hidden="true">N</span>
+                    <span>
+                        <strong>NEU-SecHRM</strong>
+                        <small>Hồ sơ cán bộ / giảng viên</small>
+                    </span>
+                </a>
+                <partial name="_LoginPartial" />
+                <div class="sidebar-note">
+                    <span>Hệ thống quản lý nội bộ</span>
+                    <small>Bảo mật theo vai trò và phạm vi hồ sơ</small>
                 </div>
-                <span class="topbar-status">NEU-SecHRM · Quản trị hồ sơ</span>
-            </header>
-            <main role="main" class="app-main">
-                @RenderBody()
-            </main>
+            </aside>
+            <div class="app-content">
+                <header class="app-topbar">
+                    <div>
+                        <span class="page-title">@ViewData["Title"]</span>
+                    </div>
+                    <span class="topbar-status">NEU-SecHRM · Quản trị hồ sơ</span>
+                </header>
+                <main role="main" class="app-main">
+                    @RenderBody()
+                </main>
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <main role="main" class="public-main">
+            @RenderBody()
+        </main>
+    }
 
-    <footer class="app-footer">
-        <span>NEU-SecHRM</span> · Quản lý và bảo mật hồ sơ cán bộ / giảng viên
-    </footer>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <footer class="app-footer">
+            <span>NEU-SecHRM</span> · Quản lý và bảo mật hồ sơ cán bộ / giảng viên
+        </footer>
+    }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

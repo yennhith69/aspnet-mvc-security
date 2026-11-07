@@ -45,6 +45,25 @@ JWT key, connection string đầy đủ hoặc private key chứng chỉ.
 | 33 | Mục 30 - bốn ca kiểm thử upload. | Bảng kết quả M30 và ảnh lỗi từng ca |
 | 34 | Kết luận: bảo mật được gắn vào workflow, không chỉ nằm trong tài liệu. | Dashboard M01 và bảng tổng hợp kết quả |
 
+## RLS và masking cho bảng nghiệp vụ mới
+
+Chạy [029_RlsNewTables.sql](../Database/029_RlsNewTables.sql) bằng tài khoản quản trị
+sau `004_RowLevelSecurity.sql`. Script bổ sung filter/block predicate cho `LichSuSucKhoes`,
+`ThanhVienGiaDinhs` và `KyLuats`, đồng thời masking `TinhTrang`, `GhiChu` và `HoTen`.
+Kiểm thử bằng tài khoản HR, Manager và Lecturer: HR xem toàn bộ trong phạm vi ứng dụng;
+Manager chỉ xem hồ sơ cùng đơn vị; Lecturer chỉ xem hồ sơ của chính mình. Với Manager và
+Lecturer, kiểm tra cả truy vấn đọc và thao tác INSERT ngoài phạm vi để xác nhận filter/block
+predicate hoạt động ở tầng database.
+
+## Chính sách xóa dữ liệu
+
+Ứng dụng không được xóa hồ sơ nhân sự, giấy tờ định danh, hợp đồng, quá trình công tác,
+lịch sử nâng lương, kỷ luật, sức khỏe hoặc nhật ký. `001_LoginsRoles.sql` gỡ quyền DENY
+ở cấp schema để tránh làm hỏng thao tác nghiệp vụ, sau đó DENY DELETE riêng trên các
+bảng lõi/lịch sử và chỉ GRANT DELETE cho các bảng phụ: thành viên gia đình, trình độ và
+tệp minh chứng, chứng chỉ, khen thưởng, giờ giảng và hoạt động NCKH. Các thao tác xóa
+được phép đều ghi `AuditLogs`; giao diện không còn nút xóa lương và kỷ luật.
+
 ## Bằng chứng nghiệp vụ bổ sung
 
 - F9: chụp màn hình bộ lọc đồng thời theo từ khóa, đơn vị, tình trạng công tác và trạng thái hồ sơ.

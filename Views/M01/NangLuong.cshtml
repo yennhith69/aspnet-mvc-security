@@ -17,10 +17,6 @@
                     <input name="NgayHieuLuc" value="@x.NgayHieuLuc.ToString("yyyy-MM-dd")" class="form-control form-control-sm" type="date" aria-label="Ngày hiệu lực" />
                     <button class="btn btn-sm btn-outline-primary" type="submit">Lưu</button>
                 </form>
-                <form asp-action="XoaNangLuong" method="post" class="d-inline">
-                    <input type="hidden" name="id" value="@x.Id" />
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
-                </form>
             }
         </td>
     </tr>

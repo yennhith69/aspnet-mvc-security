@@ -224,6 +224,7 @@ public class M01Controller : Controller
             GhiChu = string.IsNullOrWhiteSpace(vm.SucKhoeGhiChu) ? null : vm.SucKhoeGhiChu.Trim()
         });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemLichSuSucKhoe", vm.NhanSuId, "Thêm lịch sử sức khỏe");
         TempData["Success"] = "Đã thêm lịch sử sức khỏe.";
         return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
     }
@@ -261,6 +262,7 @@ public class M01Controller : Controller
                 : vm.ThanhVienNgheNghiep.Trim()
         });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemThanhVienGiaDinh", vm.NhanSuId, "Thêm thành viên gia đình");
         TempData["Success"] = "Đã thêm thành viên gia đình.";
         return RedirectToAction(nameof(NhayCam), new { nhanSuId = vm.NhanSuId });
     }
@@ -274,6 +276,7 @@ public class M01Controller : Controller
         if (item == null || !await CanViewSensitiveAsync(item.NhanSuId)) return NotFound();
         _db.ThanhVienGiaDinhs.Remove(item);
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("XoaThanhVienGiaDinh", item.NhanSuId, $"Mã bản ghi {item.Id}");
         TempData["Success"] = "Đã xóa thành viên gia đình.";
         return RedirectToAction(nameof(NhayCam), new { nhanSuId = item.NhanSuId });
     }
@@ -282,8 +285,7 @@ public class M01Controller : Controller
     [Authorize(Policy = Permissions.HoSoXem)]
     public async Task<IActionResult> NangLuong(int nhanSuId)
     {
-        if (!User.IsInRole(Roles.Admin) &&
-            !(await _authorization.AuthorizeAsync(User, Permissions.LuongXem)).Succeeded)
+        if (!(await _authorization.AuthorizeAsync(User, Permissions.LuongXem)).Succeeded)
             return Forbid();
         if (!await _scope.CanViewAsync(User, nhanSuId)) return NotFound();
         return View(await BuildLuongVmAsync(nhanSuId));
@@ -301,6 +303,7 @@ public class M01Controller : Controller
             NgayHieuLuc = vm.NgayHieuLuc!.Value
         });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemNangLuong", vm.NhanSuId, "Thêm bậc lương");
         return RedirectToAction(nameof(NangLuong), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -317,19 +320,8 @@ public class M01Controller : Controller
         item.MucLuong = vm.MucLuong;
         item.NgayHieuLuc = vm.NgayHieuLuc!.Value;
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaNangLuong", vm.NhanSuId, "Sửa bậc lương");
         return RedirectToAction(nameof(NangLuong), new { nhanSuId = vm.NhanSuId });
-    }
-
-    [HttpPost]
-    [Authorize(Policy = Permissions.HoSoSua)]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> XoaNangLuong(int id)
-    {
-        var item = await _db.NangLuongs.FindAsync(id);
-        if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
-        _db.NangLuongs.Remove(item);
-        await _db.SaveChangesAsync();
-        return RedirectToAction(nameof(NangLuong), new { nhanSuId = item.NhanSuId });
     }
 
     [HttpGet]
@@ -354,6 +346,7 @@ public class M01Controller : Controller
         if (!ModelState.IsValid) return View(vm);
         _db.KhenThuongs.Add(new KhenThuong { NhanSuId = vm.NhanSuId, Loai = vm.Loai.Trim(), NoiDung = vm.NoiDung.Trim(), Ngay = vm.Ngay!.Value });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemKhenThuong", vm.NhanSuId, "Thêm khen thưởng");
         return RedirectToAction(nameof(KhenThuong), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -366,6 +359,7 @@ public class M01Controller : Controller
         if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
         _db.KhenThuongs.Remove(item);
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("XoaKhenThuong", item.NhanSuId, $"Mã bản ghi {item.Id}");
         return RedirectToAction(nameof(KhenThuong), new { nhanSuId = item.NhanSuId });
     }
 
@@ -382,6 +376,7 @@ public class M01Controller : Controller
         item.NoiDung = vm.NoiDung.Trim();
         item.Ngay = vm.Ngay!.Value;
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaKhenThuong", vm.NhanSuId, "Sửa khen thưởng");
         return RedirectToAction(nameof(KhenThuong), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -416,19 +411,8 @@ public class M01Controller : Controller
             Ngay = vm.Ngay!.Value
         });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemKyLuat", vm.NhanSuId, "Thêm kỷ luật");
         return RedirectToAction(nameof(KyLuat), new { nhanSuId = vm.NhanSuId });
-    }
-
-    [HttpPost]
-    [Authorize(Policy = Permissions.HoSoSua)]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> XoaKyLuat(int id)
-    {
-        var item = await _db.KyLuats.FindAsync(id);
-        if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
-        _db.KyLuats.Remove(item);
-        await _db.SaveChangesAsync();
-        return RedirectToAction(nameof(KyLuat), new { nhanSuId = item.NhanSuId });
     }
 
     [HttpPost]
@@ -444,6 +428,7 @@ public class M01Controller : Controller
         item.NoiDung = vm.NoiDung.Trim();
         item.Ngay = vm.Ngay!.Value;
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaKyLuat", vm.NhanSuId, "Sửa kỷ luật");
         return RedirectToAction(nameof(KyLuat), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -469,6 +454,7 @@ public class M01Controller : Controller
         if (!ModelState.IsValid) return View(vm);
         _db.GioGiangs.Add(new GioGiang { NhanSuId = vm.NhanSuId, NamHoc = vm.NamHoc.Trim(), SoGio = vm.SoGio });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemGioGiang", vm.NhanSuId, "Thêm giờ giảng");
         return RedirectToAction(nameof(GioGiang), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -481,6 +467,7 @@ public class M01Controller : Controller
         if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
         _db.GioGiangs.Remove(item);
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("XoaGioGiang", item.NhanSuId, $"Mã bản ghi {item.Id}");
         return RedirectToAction(nameof(GioGiang), new { nhanSuId = item.NhanSuId });
     }
 
@@ -496,6 +483,7 @@ public class M01Controller : Controller
         item.NamHoc = vm.NamHoc.Trim();
         item.SoGio = vm.SoGio;
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaGioGiang", vm.NhanSuId, "Sửa giờ giảng");
         return RedirectToAction(nameof(GioGiang), new { nhanSuId = vm.NhanSuId });
     }
 
@@ -526,6 +514,7 @@ public class M01Controller : Controller
         }
         _db.HoatDongNCKHs.Add(new HoatDongNCKH { NhanSuId = vm.NhanSuId, TenHoatDong = vm.TenHoatDong.Trim(), Nam = vm.Nam });
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("ThemNckh", vm.NhanSuId, "Thêm hoạt động nghiên cứu khoa học");
         TempData["Success"] = "Đã thêm hoạt động nghiên cứu khoa học.";
         return RedirectToAction(nameof(Nckh), new { nhanSuId = vm.NhanSuId });
     }
@@ -539,6 +528,7 @@ public class M01Controller : Controller
         if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
         _db.HoatDongNCKHs.Remove(item);
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("XoaNckh", item.NhanSuId, $"Mã bản ghi {item.Id}");
         return RedirectToAction(nameof(Nckh), new { nhanSuId = item.NhanSuId });
     }
 
@@ -554,11 +544,27 @@ public class M01Controller : Controller
         item.TenHoatDong = vm.TenHoatDong.Trim();
         item.Nam = vm.Nam;
         await _db.SaveChangesAsync();
+        await WriteAuditAsync("SuaNckh", vm.NhanSuId, "Sửa hoạt động nghiên cứu khoa học");
         return RedirectToAction(nameof(Nckh), new { nhanSuId = vm.NhanSuId });
     }
 
     private static string CsvEscape(string value) =>
         $"\"{value.Replace("\"", "\"\"")}\"";
+
+    private async Task WriteAuditAsync(string hanhDong, int nhanSuId, string chiTiet)
+    {
+        _db.AuditLogs.Add(new AuditLog
+        {
+            UserId = _users.GetUserId(User),
+            UserName = User.Identity?.Name ?? "",
+            HanhDong = hanhDong,
+            DoiTuong = "NhanSu",
+            DoiTuongId = nhanSuId.ToString(),
+            ChiTiet = chiTiet,
+            Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
+        });
+        await _db.SaveChangesAsync();
+    }
 
     private async Task<M01ReportViewModel> BuildReportAsync()
     {
@@ -600,7 +606,7 @@ public class M01Controller : Controller
 
     private async Task<bool> CanViewSensitiveAsync(int id)
     {
-        if (User.IsInRole(Roles.Hr) || User.IsInRole(Roles.Admin)) return await _scope.CanViewAsync(User, id);
+        if (User.IsInRole(Roles.Hr)) return await _scope.CanViewAsync(User, id);
         var current = await _users.GetUserAsync(User);
         return current?.NhanSuId == id;
     }

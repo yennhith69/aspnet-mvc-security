@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,14 @@ public class ChungChiController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly HoSoScopeService _scope;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public ChungChiController(ApplicationDbContext db, HoSoScopeService scope)
+    public ChungChiController(ApplicationDbContext db, HoSoScopeService scope,
+        UserManager<ApplicationUser> userManager)
     {
         _db = db;
         _scope = scope;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -66,6 +70,17 @@ public class ChungChiController : Controller
         var item = await _db.ChungChis.FindAsync(id);
         if (item == null || !await _scope.CanViewAsync(User, item.NhanSuId)) return NotFound();
         _db.ChungChis.Remove(item);
+        await _db.SaveChangesAsync();
+        _db.AuditLogs.Add(new AuditLog
+        {
+            UserId = _userManager.GetUserId(User),
+            UserName = User.Identity?.Name ?? "",
+            HanhDong = "XoaChungChi",
+            DoiTuong = "NhanSu",
+            DoiTuongId = item.NhanSuId.ToString(),
+            ChiTiet = $"Mã bản ghi {item.Id}",
+            Ip = HttpContext.Connection.RemoteIpAddress?.ToString()
+        });
         await _db.SaveChangesAsync();
         TempData["Success"] = "Đã xóa chứng chỉ.";
         return RedirectToAction(nameof(Index), new { nhanSuId = item.NhanSuId });

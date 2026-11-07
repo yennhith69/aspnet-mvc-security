@@ -22,13 +22,13 @@ namespace mvcSecurity.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (User.Identity?.IsAuthenticated != true)
+                return RedirectToAction("Login", "Account");
+
             var model = new HomeDashboardViewModel
             {
-                IsAuthenticated = User.Identity?.IsAuthenticated == true
+                IsAuthenticated = true
             };
-
-            if (!model.IsAuthenticated)
-                return View(model);
 
             var scoped = await _scope.ScopedAsync(User);
             var ids = scoped.Select(x => x.Id);

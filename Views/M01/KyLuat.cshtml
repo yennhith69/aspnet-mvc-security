@@ -23,10 +23,6 @@
                         <input name="Ngay" value="@x.Ngay.ToString("yyyy-MM-dd")" class="form-control form-control-sm" type="date" aria-label="Ngày" />
                         <button class="btn btn-sm btn-outline-primary" type="submit">Lưu</button>
                     </form>
-                    <form asp-action="XoaKyLuat" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@x.Id" />
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
-                    </form>
                 }
             </td>
         </tr>
